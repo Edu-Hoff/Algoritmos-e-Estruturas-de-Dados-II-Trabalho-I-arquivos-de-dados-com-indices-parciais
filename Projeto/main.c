@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "structs.c"
+#include "servicos.c"
 
 int main ()
 {
+    //menu e chamada de servicoes
     return 0;
 }

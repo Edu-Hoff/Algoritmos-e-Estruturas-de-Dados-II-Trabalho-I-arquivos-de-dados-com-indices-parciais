@@ -1,0 +1,5 @@
+Criar arquivo config.bin que tera
+int - numero maximo de insercoes antes de reoordenar tudo
+int - contagem de insercoes atuais
+int - numero maximo de remocoes antes de reoordenar tudo
+int - contagem de remocoes atuais
