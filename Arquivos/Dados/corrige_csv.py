@@ -1,13 +1,7 @@
 import csv
 
-# Definições de caminho conforme fornecido nos prompts anteriores
 arquivo = r"D:\EduFaculdade\Semestre4\AlgoritmoseEstruturasdeDados2\Algoritmos-e-Estruturas-de-Dados-II-Trabalho-I-arquivos-de-dados-com-indices-parciais\Arquivos\Dados\dados.csv"
-
-# O número de colunas que você definiu como padrão (Target)
 COLUNAS_ALVO = 13
-
-# Dicionário para armazenar a contagem de linhas por número de colunas
-# Formato: {num_colunas: [lista de numeros de linha]}
 linhas_fora_do_padrao = {}
 
 print(f"Verificando o arquivo: {arquivo}")
@@ -19,7 +13,6 @@ try:
         
         for num_linha, row in enumerate(reader, 1):
             
-            # Pular linhas que estão completamente vazias no arquivo
             if not row and num_linha > 1:
                 continue
 
@@ -31,9 +24,6 @@ try:
                 
                 linhas_fora_do_padrao[num_colunas].append(num_linha)
 
-    # ----------------------------------------------------
-    # Geração da Saída
-    # ----------------------------------------------------
     
     if not linhas_fora_do_padrao:
         print(f"✅ Todas as linhas do arquivo têm exatamente {COLUNAS_ALVO} colunas.")
@@ -41,7 +31,6 @@ try:
         print(f"🚨 Linhas que NÃO têm {COLUNAS_ALVO} colunas:")
         linhas = linhas_fora_do_padrao[11]
             
-        # Formato de saída desejado: "ha y linhas com x colunas (linhas comecando do 1)"
         print(f"ha {len(linhas)} linhas com {11} colunas (linhas: {linhas})")
 
 except FileNotFoundError:
