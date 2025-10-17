@@ -3,13 +3,15 @@
 #include <string.h>
 #include "structs.c"
 
-void limpar_tela()
+void limpar_tela(char *msg)
 {
     #ifdef _WIN32
         system("cls");
     #else
         system("clear");
     #endif
+    if(!strcmp("",msg))
+        printf("%s",msg);
 }
 
 int existe(ORDER *pedidos, unsigned long long id_pedido, int tam)

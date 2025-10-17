@@ -31,7 +31,7 @@ void criar_arquivos_dados()
     {
         if(n_ped % 5000 == 0)
         {
-            limpar_tela();
+            limpar_tela("");
             printf("Pedidos: %d - Produtos: %d",n_ped,n_prod);
         }
         linha[strcspn(linha, "\n")] = '\0';
