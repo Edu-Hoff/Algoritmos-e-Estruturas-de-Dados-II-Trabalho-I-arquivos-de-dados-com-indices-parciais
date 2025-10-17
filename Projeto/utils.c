@@ -3,6 +3,31 @@
 #include <string.h>
 #include "structs.c"
 
+void limpar_tela()
+{
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
+int existe(ORDER *pedidos, unsigned long long id_pedido, int tam)
+{
+    for(int i=0;i<tam;i++)
+        if(pedidos[i].order_id == id_pedido)
+            return i;
+    return -1;
+}
+
+int existe_produto(PRODUCT *produtos, unsigned long long id_produto, int tam)
+{
+    for(int i=0;i<tam;i++)
+        if(produtos[i].product_id == id_produto)
+            return 1;
+    return 0;
+}
+
 void copiar_e_preencher(char *destino, const char *origem, size_t tamanho)
 {
     size_t len_origem = strlen(origem);
@@ -97,4 +122,115 @@ void desconstruir_linha(char string[], int *sku, ORDER *order, PRODUCT *product)
 
     token = tokenizacao(NULL, ',', &saveptr);
     copiar_e_preencher(product->main_gem, (token && token[0] != '\0' ? token : "none"), SIZE_MAIN_CMG);
+}
+
+
+FILE *abrir(const char *nome, const char *modo)
+{
+    FILE *temp = fopen(nome,modo);
+    if (!temp) {
+        fprintf(stderr, "Erro abrindo '%s' com modo '%s': %s\n", nome, modo, strerror(errno));
+        return NULL;
+    }
+    return temp;
+}
+
+void debug_txt()
+{
+    FILE *produtos_bin = abrir(PATH_DADOS_PROD, "rb");
+    FILE *produtos_txt = fopen(DIR_TXT "produtos_completos.txt", "w"); 
+    PRODUCT prod;
+
+    if (!produtos_bin || !produtos_txt) 
+        return;
+    
+    fprintf(produtos_txt, "PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SIZE) - MAIN_METAL (SIZE) - MAIN_GEM (SIZE) - EXC - PROX - ANT\n");
+    while (fread(&prod, sizeof(PRODUCT), 1, produtos_bin))
+    {
+        fprintf(produtos_txt, 
+            "%-20llu - %-20llu - %s - %04d - %07.2f - %c - %s - %s - %s - %1d - %ld - %ld\n",
+            prod.product_id,
+            prod.category_id,
+            prod.category_alias, 
+            prod.brand_id,
+            prod.price,
+            prod.product_gender,
+            prod.main_color,     
+            prod.main_metal,     
+            prod.main_gem,       
+            (int)prod.exclusao,  
+            prod.prox,
+            prod.ant
+        );
+    }
+    
+    fclose(produtos_bin);
+    fclose(produtos_txt);
+
+    FILE *pedidos_bin = abrir(PATH_DADOS_ORDER, "rb");
+    FILE *pedidos_txt = fopen(DIR_TXT "pedidos_completos.txt", "w"); 
+    ORDER ord;
+
+    if (!pedidos_bin || !pedidos_txt) 
+        return;
+
+    fprintf(pedidos_txt, "ORDER_ID - DATA_UTC - USER_ID - QTD_PRODS - PRODUCTS_ID (SKU) - EXC - PROX - ANT\n");
+    
+    while (fread(&ord, sizeof(ORDER), 1, pedidos_bin))
+    {
+        fprintf(pedidos_txt, 
+            "%-20llu - %04d/%02d/%02d %02d:%02d:%02d UTC - %-20llu - %03d - ",
+            ord.order_id,
+            ord.date_time.year,
+            ord.date_time.month,
+            ord.date_time.day,
+            ord.date_time.hour,
+            ord.date_time.min,
+            ord.date_time.sec,
+            ord.user_id,
+            ord.products_amount 
+        );
+
+        for (int i = 0; i < ord.products_amount; i++) {
+            fprintf(pedidos_txt, "[%20llu:%d]|", ord.products_id[i], ord.SKU_in_order[i]);
+        }
+
+        fprintf(pedidos_txt, 
+            " - %1d - %ld - %ld\n",
+            (int)ord.exclusao,
+            ord.prox,
+            ord.ant
+        );
+    }
+
+    fclose(pedidos_bin);
+    fclose(pedidos_txt);
+
+    FILE *ind_prod_bin = abrir(PATH_INDEX_PROD, "rb");
+    FILE *ind_prod_txt = fopen(DIR_TXT"indice_prod.txt", "w");
+    INDEX ind_prod;
+
+    if(ind_prod_bin && ind_prod_txt) {
+        fprintf(ind_prod_txt, "Endereco - Chave (product_id)\n");
+        while(fread(&ind_prod, sizeof(INDEX), 1, ind_prod_bin))
+        {
+            fprintf(ind_prod_txt, "%ld - %llu\n", ind_prod.endereco, ind_prod.chave);
+        }
+        fclose(ind_prod_bin);
+        fclose(ind_prod_txt);
+    }
+
+    FILE *ind_order_bin = abrir(PATH_INDEX_ORDER, "rb");
+    FILE *ind_order_txt = fopen(DIR_TXT"indice_order.txt", "w");
+    INDEX ind_order;
+
+    if(ind_order_bin && ind_order_txt) {
+        fprintf(ind_order_txt, "Endereco - Chave (order_id)\n");
+        while(fread(&ind_order, sizeof(INDEX), 1, ind_order_bin))
+        {
+            fprintf(ind_order_txt, "%ld - %llu\n", ind_order.endereco, ind_order.chave);
+        }
+        fclose(ind_order_bin);
+        fclose(ind_order_txt);
+    }
 }

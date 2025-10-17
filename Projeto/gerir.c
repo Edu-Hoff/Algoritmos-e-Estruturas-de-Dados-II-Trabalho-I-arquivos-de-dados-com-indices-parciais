@@ -2,103 +2,72 @@
 #include <stdlib.h>
 #include "busca.c"
 
-FILE *abrir(const char *nome, const char *modo)
+int cmp_product(const void *a, const void *b)
 {
-    FILE *temp = fopen(ARQ_DADOS_ORIGEM,"r");
-    if(!temp) 
-    {
-        printf("Erro ao abrir o arquivo %s\n",ARQ_DADOS_ORIGEM);
-        return NULL;
-    } 
-    return temp;
+    PRODUCT *pa = (PRODUCT*)a;
+    PRODUCT *pb = (PRODUCT*)b;
+    if (pa->product_id < pb->product_id) return -1;
+    if (pa->product_id > pb->product_id) return 1;
+    return 0;
 }
 
-long inserir_produto_direto(PRODUCT produto)
+int cmp_order(const void *a, const void *b)
 {
-    FILE *produtos = abrir(PATH_DADOS_PROD, "r+b");
-    PRODUCT prod;
-    if(!produtos) return -1;
-    fseek(produtos,-sizeof(PRODUCT),SEEK_END);
-    while(fread(&prod, sizeof(PRODUCT), 1, produtos))
-        if (prod.product_id<produto.product_id) break;
-        else
-        {
-            fwrite(&prod, 1, sizeof(PRODUCT),produtos);
-            fseek(produtos, 3 * (-sizeof(PRODUCT)),SEEK_END);
-            if(0 == ftell(produtos)) break;
-        }
-    fwrite(&produto, 1, sizeof(PRODUCT), produtos);
-    fseek(produtos,-sizeof(PRODUCT),SEEK_END);
-    long end = ftell(produtos);
-    fclose(produtos);
-    return end;
-}
-
-long inserir_pedido_direto(ORDER pedido)
-{
-    FILE *pedidos = abrir(PATH_DADOS_ORDER, "r+b");
-    ORDER ped;
-    if(!pedidos) return -1;
-    fseek(pedidos,-sizeof(ORDER),SEEK_END);
-    while(fread(&ped, sizeof(ORDER), 1, pedidos))
-        if (ped.order_id<pedido.order_id) break;
-        else
-        {
-            fwrite(&ped, 1, sizeof(ORDER),pedidos);
-            fseek(pedidos, 3 * (-sizeof(ORDER)),SEEK_END);
-            if(0 == ftell(pedidos)) break;
-        }
-    fwrite(&pedido, 1, sizeof(ORDER), pedidos);
-    fseek(pedidos,-sizeof(ORDER),SEEK_END);
-    long end = ftell(pedidos);
-    fclose(pedidos);
-    return end;
-}
-
-void inserir_produto_pedido(long endereco_pedido, unsigned long long product_id, int sku_produto)
-{
-    FILE *pedidos = abrir(PATH_DADOS_ORDER, "r+b");
-    if(!pedidos) return -1;
-    fseek(pedidos,endereco_pedido,SEEK_SET);
-    ORDER pedido;
-    fread(&pedido, sizeof(ORDER), 1, pedidos);
-    int indice = pedido.products_amount;
-    if(indice != AMOUNT_MAX)
-    {
-        pedido.products_id[pedido.products_amount]=product_id;
-        pedido.SKU_in_order[(pedido.products_amount)++]=sku_produto;
-        fseek(pedidos,endereco_pedido,SEEK_SET);
-        fwrite(&pedido, sizeof(ORDER), 1, pedidos);
-    }
-    fclose(pedidos);
+    ORDER *pa = (ORDER*)a;
+    ORDER *pb = (ORDER*)b;
+    if (pa->order_id < pb->order_id) return -1;
+    if (pa->order_id > pb->order_id) return 1;
+    return 0;
 }
 
 void criar_arquivos_dados()
 {
+    PRODUCT *produtos_mem =(PRODUCT *) malloc(MAX_RECORDS * sizeof(PRODUCT));
+    ORDER   *pedidos_mem  =(ORDER *) malloc(MAX_RECORDS * sizeof(ORDER));
+    int n_prod = 0, n_ped = 0;
     FILE *dados = abrir(PATH_DADOS_ORIGEM,"r");
-    FILE *produtos = abrir(PATH_DADOS_PROD,"wb");
-    FILE *pedidos = abrir(PATH_DADOS_ORDER,"wb");
-    
-    if(!dados || !produtos || !pedidos) return;
-
-    fclose(produtos);
-    fclose(pedidos);
-    char linha[122 + (30 * AMOUNT_MAX) + SIZE_CATEGORY + (3 * SIZE_MAIN_CMG) + 10 + 30];
-    while(fgets(linha,1,dados))
+    char linha[122 + (30 * AMOUNT_MAX) + SIZE_CATEGORY + (3 * SIZE_MAIN_CMG) + 10 + 30];  
+    while(fgets(linha, sizeof(linha), dados))
     {
+        if(n_ped % 5000 == 0)
+        {
+            limpar_tela();
+            printf("Pedidos: %d - Produtos: %d",n_ped,n_prod);
+        }
         linha[strcspn(linha, "\n")] = '\0';
-        ORDER pedido;
-        PRODUCT produto;
-        int sku_produto;
-        desconstruir_linha(linha,&sku_produto,&pedido,&produto);
-        long end_prod = busca_produto(0, pedido.order_id), end_ped = busca_pedido(0, produto.product_id);
-        if(end_prod == -1)
-            end_prod = inserir_produto_direto(produto);
-        if(end_ped == -1)
-            end_ped = inserir_pedido_direto(pedido);
-        inserir_produto_pedido(end_ped, produto.product_id, sku_produto);
+        int sku;
+        PRODUCT prod;
+        ORDER ped;
+        desconstruir_linha(linha, &sku, &ped, &prod);
+        if(!existe_produto(produtos_mem,prod.product_id,n_prod))
+            produtos_mem[n_prod++] = prod;
+        int indice = existe(pedidos_mem, ped.order_id, n_ped);
+        if(indice == -1)
+        {
+            ped.products_id[ped.products_amount]=prod.product_id;
+            ped.SKU_in_order[ped.products_amount++]=sku;
+            pedidos_mem[n_ped++]   = ped;
+        }
+        else
+        {
+            pedidos_mem[indice].products_id[pedidos_mem[indice].products_amount]=prod.product_id;
+            pedidos_mem[indice].SKU_in_order[pedidos_mem[indice].products_amount++]=sku;
+        }
     }
-    fclose(dados);
+    qsort(produtos_mem, n_prod, sizeof(PRODUCT), cmp_product);
+    qsort(pedidos_mem, n_ped, sizeof(ORDER), cmp_order);
+
+    FILE *fprod = fopen(PATH_DADOS_PROD, "wb");
+    fwrite(produtos_mem, sizeof(PRODUCT), n_prod, fprod);
+    fclose(fprod);
+
+    FILE *fped = fopen(PATH_DADOS_ORDER, "wb");
+    fwrite(pedidos_mem, sizeof(ORDER), n_ped, fped);
+    fclose(fped);
+
+    free(produtos_mem); 
+    free(pedidos_mem);
+
 }
 
 void criar_arquivos_indice()
@@ -108,50 +77,66 @@ void criar_arquivos_indice()
     FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
     FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
 
-    if(!ind_prod || !ind_ord || !produtos || !pedidos) return;
+    if(!ind_prod || !ind_ord || !produtos || !pedidos) {
+        if(ind_prod) fclose(ind_prod);
+        if(ind_ord) fclose(ind_ord);
+        if(produtos) fclose(produtos);
+        if(pedidos) fclose(pedidos);
+        return;
+    }
 
     INDEX indice;
     PRODUCT produto;
-    int i=0;
+    int i=0; 
+    
+    long end_prod_inicio = 0; 
+
     while(fread(&produto, sizeof(PRODUCT), 1, produtos))
     {
         if(i==0)
-            indice.endereco = ftell(produtos);
-        else if (i==ARQ_INDEX_AMOUNT_PROD - 1)
+            indice.endereco = end_prod_inicio; 
+
+        if (i == ARQ_INDEX_AMOUNT_PROD - 1)
         {
             indice.chave = produto.product_id;
+            fwrite(&indice, sizeof(INDEX), 1, ind_prod);
             i=0;
-            fwrite(&indice,sizeof(INDEX),1,ind_prod);
         }
         else 
             i++;
+        
+        end_prod_inicio += sizeof(PRODUCT);
     }
+    
     if(i != 0)
     {
         indice.chave = produto.product_id;
-        fwrite(&indice,sizeof(INDEX),1,ind_prod);
+        fwrite(&indice, sizeof(INDEX), 1, ind_prod);
     }
 
     ORDER order;
-    int i=0;
-    while(fread(&order, sizeof(PRODUCT), 1,pedidos))
+    i=0; 
+    long end_order_inicio = 0; 
+
+    while(fread(&order, sizeof(ORDER), 1, pedidos))
     {
         if(i==0)
-            indice.endereco = ftell(pedidos);
-        else if (i==ARQ_INDEX_AMOUNT_ORDER - 1)
+            indice.endereco = end_order_inicio; 
+
+        if (i == ARQ_INDEX_AMOUNT_ORDER - 1)
         {
             indice.chave = order.order_id;
-            i=0;
-            fwrite(&indice,sizeof(INDEX),1,ind_ord);
+            fwrite(&indice, sizeof(INDEX), 1, ind_ord);
+            i=0; 
         }
         else 
             i++;
+        end_order_inicio = ftell(produtos);
     }
     if(i != 0)
     {
         indice.chave = order.order_id;
-        i=0;
-        fwrite(&indice,sizeof(INDEX),1,ind_ord);
+        fwrite(&indice, sizeof(INDEX), 1, ind_ord);
     }
 
     fclose(ind_ord);
@@ -160,9 +145,42 @@ void criar_arquivos_indice()
     fclose(pedidos);
 }
 
+void reorganizar()
+{
+    PRODUCT *produtos_mem =(PRODUCT *) malloc(MAX_RECORDS * sizeof(PRODUCT));
+    ORDER   *pedidos_mem  =(ORDER *) malloc(MAX_RECORDS * sizeof(ORDER));
+    int n_prod = 0, n_ped = 0;
+
+    FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
+    while(fread(&produtos_mem[n_prod], sizeof(PRODUCT), 1, produtos))
+        if (n_prod >= MAX_RECORDS) break;
+        else n_prod++;
+    fclose(produtos);
+
+    FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
+    while(fread(&pedidos_mem[n_ped], sizeof(ORDER), 1, pedidos))
+        if (n_ped >= MAX_RECORDS) break;
+        else n_ped++;
+    fclose(pedidos);
+
+    qsort(produtos_mem, n_prod, sizeof(PRODUCT), cmp_product);
+    qsort(pedidos_mem, n_ped, sizeof(ORDER), cmp_order);
+
+    FILE *produtos = fopen(PATH_DADOS_PROD, "wb");
+    fwrite(produtos_mem, sizeof(PRODUCT), n_prod, produtos);
+    fclose(produtos);
+
+    FILE *pedidos = fopen(PATH_DADOS_ORDER, "wb");
+    fwrite(pedidos_mem, sizeof(ORDER), n_ped, pedidos);
+    fclose(pedidos);
+    free(produtos_mem);
+    free(pedidos_mem);
+
+    criar_arquivos_indice();
+}
+
 void criar_arquivos_base()
 {
-    //add teste se ja existe os arquivos
     criar_arquivos_dados();
     criar_arquivos_indice();
 }
