@@ -14,10 +14,15 @@ void exibir_menu()
         printf("==================================\n");
         printf("=====         Exbir          =====\n");
         printf("==================================\n\n");
-
+        //Apenas ideia por enquanto
         printf("1 - Produtos Cadastrado\n");     
         printf("2 - Pedidos Cadastrados\n");   
-        printf("3 - Oq mais?\n"); 
+        printf("3 - Produto (Id - Binaria)\n"); 
+        printf("4 - Pedido (Id - Binaria)\n"); 
+        printf("5 - Produtos (Categoria)\n"); 
+        printf("6 - Pedidos (Data)\n");
+        printf("7 - Pedidos (Id Usuario)\n");
+        printf("0 - Voltar\n"); 
         switch (op)
         {
             case 1:

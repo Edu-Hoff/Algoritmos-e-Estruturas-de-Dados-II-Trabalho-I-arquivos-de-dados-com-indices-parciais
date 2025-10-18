@@ -147,34 +147,52 @@ void criar_arquivos_indice()
 
 void reorganizar()
 {
-    PRODUCT *produtos_mem =(PRODUCT *) malloc(MAX_RECORDS * sizeof(PRODUCT));
-    ORDER   *pedidos_mem  =(ORDER *) malloc(MAX_RECORDS * sizeof(ORDER));
-    int n_prod = 0, n_ped = 0;
+    PRODUCT produto;
+    ORDER   pedido;
 
     FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
-    while(fread(&produtos_mem[n_prod], sizeof(PRODUCT), 1, produtos))
-        if (n_prod >= MAX_RECORDS) break;
-        else n_prod++;
+    FILE *tmp_prod = abrir(DIR_DADOS "tmp_prod.bin","wb");
+
+    while(fread(&produto, sizeof(PRODUCT), 1, produtos))
+    {
+        if (produto.ant != -1)
+        {
+            fseek(produtos, produto.ant, SEEK_SET);
+            continue;
+        }
+
+        fwrite(&produto, sizeof(PRODUCT), 1, tmp_prod);
+
+        if (produto.prox != -1)
+            fseek(produtos, produto.prox, SEEK_SET);
+    }
+
     fclose(produtos);
+    fclose(tmp_prod);
+    remove(PATH_DADOS_PROD);
+    rename(DIR_DADOS "tmp_prod.bin", PATH_DADOS_PROD);
 
     FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
-    while(fread(&pedidos_mem[n_ped], sizeof(ORDER), 1, pedidos))
-        if (n_ped >= MAX_RECORDS) break;
-        else n_ped++;
+    FILE *tmp_ped = abrir(DIR_DADOS "tmp_ped.bin","wb");
+
+    while(fread(&pedido, sizeof(ORDER), 1, pedidos))
+    {
+        if (pedido.ant != -1)
+        {
+            fseek(pedidos, pedido.ant, SEEK_SET);
+            continue;
+        }
+
+        fwrite(&pedido, sizeof(ORDER), 1, tmp_ped);
+
+        if (pedido.prox != -1)
+            fseek(pedidos, pedido.prox, SEEK_SET);
+    }
+
     fclose(pedidos);
-
-    qsort(produtos_mem, n_prod, sizeof(PRODUCT), cmp_product);
-    qsort(pedidos_mem, n_ped, sizeof(ORDER), cmp_order);
-
-    FILE *produtos = fopen(PATH_DADOS_PROD, "wb");
-    fwrite(produtos_mem, sizeof(PRODUCT), n_prod, produtos);
-    fclose(produtos);
-
-    FILE *pedidos = fopen(PATH_DADOS_ORDER, "wb");
-    fwrite(pedidos_mem, sizeof(ORDER), n_ped, pedidos);
-    fclose(pedidos);
-    free(produtos_mem);
-    free(pedidos_mem);
+    fclose(tmp_ped);
+    remove(PATH_DADOS_ORDER);
+    rename(DIR_DADOS "tmp_ped.bin", PATH_DADOS_ORDER);
 
     criar_arquivos_indice();
 }
