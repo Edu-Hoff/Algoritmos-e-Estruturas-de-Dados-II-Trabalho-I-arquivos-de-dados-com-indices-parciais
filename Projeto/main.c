@@ -15,23 +15,35 @@ void exibir_menu()
         printf("=====         Exbir          =====\n");
         printf("==================================\n\n");
         //Apenas ideia por enquanto
-        printf("1 - Produtos Cadastrado\n");     
-        printf("2 - Pedidos Cadastrados\n");   
-        printf("3 - Produto (Id - Binaria)\n"); 
-        printf("4 - Pedido (Id - Binaria)\n"); 
-        printf("5 - Produtos (Categoria)\n"); 
+        printf("1 - Produtos Cadastrado\n");   //Feito todos_produtos
+        printf("2 - Pedidos Cadastrados\n");   //Feito todos_pedidos
+        printf("3 - Produto (Id - Binaria)\n"); //Feito busca_produto - BINARIA
+        printf("4 - Pedido (Id - Binaria)\n"); //Feito busca_pedido - BINARIA
+        printf("5 - Produtos (Categoria Alias)\n"); 
         printf("6 - Pedidos (Data)\n");
         printf("7 - Pedidos (Id Usuario)\n");
         printf("0 - Voltar\n"); 
         switch (op)
         {
             case 1:
-                /* code */
+                todos_produtos();
                 break;
             case 2:
-                /* code */
+                todos_pedidos();
                 break;
             case 3:
+                busca_produto();
+                break;
+            case 4:
+                busca_pedido();
+                break;
+            case 5:
+                /* code */
+                break;
+            case 6:
+                /* code */
+                break;
+            case 7:
                 /* code */
                 break;
             default:
@@ -97,7 +109,7 @@ void menu()
 
         printf("1 - Exibir Dados\n");     
         printf("2 - Inserir/Remover Dados\n");   
-        printf("3 - Salvar Dados\n"); 
+        printf("3 - Configurar Reordenacao\n"); 
     }while(op!=0);
 }
 

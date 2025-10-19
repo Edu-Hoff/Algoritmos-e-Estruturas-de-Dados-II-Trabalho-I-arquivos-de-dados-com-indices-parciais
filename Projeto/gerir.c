@@ -145,7 +145,7 @@ void criar_arquivos_indice()
     fclose(pedidos);
 }
 
-void reorganizar()
+void reordenar()
 {
     PRODUCT produto;
     ORDER   pedido;
@@ -203,4 +203,35 @@ void criar_arquivos_base()
     criar_arquivos_indice();
 }
 
+
+void atualizar_inicio(const char * file, long offset, long novo_inicio)
+{
+    FILE *f = abrir(file,"rb+");
+    if(!f) return;
+    fseek(f, offset, SEEK_SET);
+    INDEX novo_ind;
+    fread(&novo_ind, sizeof(INDEX), 1, f);
+    novo_ind.endereco = novo_inicio;
+    fseek(f, -sizeof(INDEX), SEEK_CUR);
+    fwrite(&novo_ind, sizeof(INDEX), 1, f);
+    fclose(f);
+}
+
+void atualizar_final(const char * file, long offset, unsigned long long nova_chave)
+{
+    FILE *f = abrir(file,"rb+");
+    if(!f) return;
+    fseek(f, offset, SEEK_SET);
+    INDEX novo_ind;
+    fread(&novo_ind, sizeof(INDEX), 1, f);
+    novo_ind.chave = nova_chave;
+    fseek(f, -sizeof(INDEX), SEEK_CUR);
+    fwrite(&novo_ind, sizeof(INDEX), 1, f);
+    fclose(f);
+}
+
+
+
 //add e remover produto pedido produto-pedido
+//unsigned long long enda, end, endp; // Anterior, atual, final
+//cuidar se for antes do primeiro registro
