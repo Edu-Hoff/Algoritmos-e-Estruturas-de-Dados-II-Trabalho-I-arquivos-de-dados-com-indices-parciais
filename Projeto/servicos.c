@@ -44,6 +44,7 @@ void busca_pedido()
         printf("Quantidade de produtos: %d\n",pedido.products_amount);
         for(int i=0; i<pedido.products_amount; i++)
         {
+            //TODAS INFOS DO PRODUTO???
             printf("\tProduto[%d]: %d\n",i+1,pedido.products_id[i]);
             printf("\tSKU[%d]: %d\n",i+1,pedido.SKU_in_order[i]);
         }
@@ -119,6 +120,37 @@ void todos_pedidos()
     printf("------------------------------------\n");
 }
 
+void maximo_insercoes()
+{
+    int maximo;
+    FILE *conf = abrir(ARQ_CONFIG,"rb");
+    fread(&maximo,sizeof(int),1,conf);
+    fread(&maximo,sizeof(int),1,conf);
+    fclose(conf);
+    printf("O maximo atual de insercoes e: %d\n",maximo);
+    printf("------------------------------------\n");
+    printf("Informe o novo limite: ");    
+    scanf("%d",&maximo);
+    printf("------------------------------------\n");
+    configurar(1,maximo);
+}
+
+void maximo_remocoes()
+{
+    int maximo;
+    FILE *conf = abrir(ARQ_CONFIG,"rb");
+    fread(&maximo,sizeof(int),1,conf);
+    fread(&maximo,sizeof(int),1,conf);
+    fread(&maximo,sizeof(int),1,conf);
+    fread(&maximo,sizeof(int),1,conf);
+    fclose(conf);
+    printf("O maximo atual de remocoes e: %d\n",maximo);
+    printf("------------------------------------\n");
+    printf("Informe o novo limite: ");    
+    scanf("%d",&maximo);
+    printf("------------------------------------\n");
+    configurar(2,maximo);
+}
 //consulta com exibicoes 
 //insercoes e remocoes 
 

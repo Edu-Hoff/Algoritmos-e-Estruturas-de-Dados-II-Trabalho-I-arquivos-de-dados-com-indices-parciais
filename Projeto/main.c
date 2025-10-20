@@ -99,6 +99,35 @@ void inserir_remover_menu()
     } while (op != 0);   
 }
 
+void configurar_menu()
+{
+    int op=0;
+    do
+    {
+        printf("==================================\n");
+        printf("========    Configurar    ========\n");
+        printf("==================================\n\n");
+
+        printf("1 - Editar Limite Insercoes\n");     
+        printf("2 - Editar Limite Remocoes\n");   
+        printf("0 - Voltar\n"); 
+        switch (op)
+        {
+            case 1:
+                maximo_insercoes();
+                break;
+            case 2:
+                maximo_remocoes();
+                break;
+            case 0:
+                break;
+            default:
+                opcao_invalida();
+                break;
+        }
+    } while (op != 0);   
+}
+
 void menu()
 {
     int op=0;

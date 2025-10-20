@@ -195,12 +195,40 @@ void reordenar()
     rename(DIR_DADOS "tmp_ped.bin", PATH_DADOS_ORDER);
 
     criar_arquivos_indice();
+
+    FILE *conf = abrir(ARQ_CONFIG,"r+b");
+    if(!conf) return;
+    int organizado = 1;
+    fwrite(&organizado,sizeof(int),1,conf);
+    fclose(conf);
+}
+
+void configurar(int item, int novo)
+{
+    if((item != 1 && item != 2) || novo < 0) return;
+    FILE *conf = abrir(ARQ_CONFIG,"r+b");
+    if(!conf) return;
+    int aux;
+    fread(&aux,sizeof(int),1,conf);
+    if(item == 1)
+        fwrite(&novo,sizeof(int),1,conf);
+    else if (item == 2)
+    {
+        fread(&aux,sizeof(int),1,conf);
+        fread(&aux,sizeof(int),1,conf);
+        fwrite(&novo,sizeof(int),1,conf);
+    }
+    fclose(conf);
 }
 
 void criar_arquivos_base()
 {
     criar_arquivos_dados();
     criar_arquivos_indice();
+    FILE *conf = abrir(ARQ_CONFIG,"wb");
+    int v[5]={0};
+    fwrite(v,sizeof(int),5,conf);
+    fclose(conf);    
 }
 
 
@@ -230,7 +258,35 @@ void atualizar_final(const char * file, long offset, unsigned long long nova_cha
     fclose(f);
 }
 
+void inserir_produto(PRODUCT produto)
+{
+    
+}
 
+void inserir_pedido(ORDER pedido)
+{
+    
+}
+
+void inserir_produto_pedido(unsigned long long order_id, unsigned long long product_id)
+{
+    
+}
+
+void remover_produto_pedido(unsigned long long order_id, unsigned long long product_id)
+{
+    
+}
+
+void remover_produto(unsigned long long product_id)
+{
+    
+}
+
+void remover_pedido(unsigned long long order_id)
+{
+    
+}
 
 //add e remover produto pedido produto-pedido
 //unsigned long long enda, end, endp; // Anterior, atual, final
