@@ -116,6 +116,8 @@ ORDER indice_pedido_binaria(unsigned long long id)
     return busca_pedido_binaria(melhor_ind.endereco, id);
 }
 
+//Tornar sequencial e binaria so no indice
+
 PRODUCT busca_produto_binaria(long end_inicio, unsigned long long id)
 {
     FILE *produtos = abrir(PATH_DADOS_PROD,"rb");

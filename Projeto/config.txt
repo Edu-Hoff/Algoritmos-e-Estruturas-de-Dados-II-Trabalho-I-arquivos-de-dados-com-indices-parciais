@@ -1,6 +1,6 @@
 Criar arquivo config.bin que tera
-int - flag de ordem
-int - numero maximo de insercoes antes de reoordenar tudo
-int - contagem de insercoes atuais
-int - numero maximo de remocoes antes de reoordenar tudo
-int - contagem de remocoes atuais
+0 int - numero maximo de insercoes antes de reoordenar tudo
+1 int - numero maximo de remocoes antes de reoordenar tudo
+2 int (produto) / 3 int (pedido) - contagem de insercoes atuais
+4 int (produto) / 5 int (pedido) - contagem de remocoes atuais
+6 int (produto) / 7 int (pedido) - flag de ordem

@@ -70,6 +70,24 @@ char* tokenizacao(char *string, char separador, char **save)
     return temp;
 }
 
+int checar_config(int indice)
+{
+    FILE *f = abrir(PATH_CONFIG,"rb");
+    fseek(f, indice * sizeof(int),SEEK_SET);
+    int num;
+    fread (&num,sizeof(int),1,f);
+    fclose(f);
+    return num;
+}
+
+void alterar_config(int indice, int novo_valor)
+{
+    FILE *f = abrir(PATH_CONFIG,"r+b");
+    fseek(f, indice * sizeof(int),SEEK_SET);
+    fwrite (&novo_valor,sizeof(int),1,f);
+    fclose(f);
+}
+
 void desconstruir_linha(char string[], int *sku, ORDER *order, PRODUCT *product)
 {
     char *token;

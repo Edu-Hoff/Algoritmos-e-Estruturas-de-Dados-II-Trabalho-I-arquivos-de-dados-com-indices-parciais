@@ -70,137 +70,156 @@ void criar_arquivos_dados()
 
 }
 
-void criar_arquivos_indice()
+void criar_arquivos_indice(int opcao)
 {
-    FILE *ind_prod = abrir(PATH_INDEX_PROD,"wb");
-    FILE *ind_ord = abrir(PATH_INDEX_ORDER,"wb");
-    FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
-    FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
-
-    if(!ind_prod || !ind_ord || !produtos || !pedidos) {
-        if(ind_prod) fclose(ind_prod);
-        if(ind_ord) fclose(ind_ord);
-        if(produtos) fclose(produtos);
-        if(pedidos) fclose(pedidos);
-        return;
-    }
-
     INDEX indice;
-    PRODUCT produto;
     int i=0; 
-    
-    long end_prod_inicio = 0; 
 
-    while(fread(&produto, sizeof(PRODUCT), 1, produtos))
+    if(opcao == 0 || opcao == 2)
     {
-        if(i==0)
-            indice.endereco = end_prod_inicio; 
+        FILE *ind_prod = abrir(PATH_INDEX_PROD,"wb");
+        FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
+        if(!ind_prod || !produtos) {
+            if(ind_prod) fclose(ind_prod);
+            if(produtos) fclose(produtos);
+            return;
+        }
 
-        if (i == ARQ_INDEX_AMOUNT_PROD - 1)
+        PRODUCT produto;
+    
+        long end_prod_inicio = 0; 
+
+        while(fread(&produto, sizeof(PRODUCT), 1, produtos))
+        {
+            if(i==0)
+                indice.endereco = end_prod_inicio; 
+
+            if (i == ARQ_INDEX_AMOUNT_PROD - 1)
+            {
+                indice.chave = produto.product_id;
+                fwrite(&indice, sizeof(INDEX), 1, ind_prod);
+                i=0;
+            }
+            else 
+                i++;
+            
+            end_prod_inicio += sizeof(PRODUCT);
+        }
+        
+        if(i != 0)
         {
             indice.chave = produto.product_id;
             fwrite(&indice, sizeof(INDEX), 1, ind_prod);
-            i=0;
         }
-        else 
-            i++;
-        
-        end_prod_inicio += sizeof(PRODUCT);
+
+        fclose(ind_prod);
+        fclose(produtos);
     }
     
-    if(i != 0)
+    if(opcao == 1 || opcao == 2)
     {
-        indice.chave = produto.product_id;
-        fwrite(&indice, sizeof(INDEX), 1, ind_prod);
-    }
+        FILE *ind_ord = abrir(PATH_INDEX_ORDER,"wb");
+        FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
 
-    ORDER order;
-    i=0; 
-    long end_order_inicio = 0; 
+        if(!ind_ord || !pedidos) 
+        {
+            if(ind_ord) fclose(ind_ord);
+            if(pedidos) fclose(pedidos);
+            return;
+        }
 
-    while(fread(&order, sizeof(ORDER), 1, pedidos))
-    {
-        if(i==0)
-            indice.endereco = end_order_inicio; 
+        ORDER order;
+        i=0; 
+        long end_order_inicio = 0; 
 
-        if (i == ARQ_INDEX_AMOUNT_ORDER - 1)
+        while(fread(&order, sizeof(ORDER), 1, pedidos))
+        {
+            if(i==0)
+                indice.endereco = end_order_inicio; 
+
+            if (i == ARQ_INDEX_AMOUNT_ORDER - 1)
+            {
+                indice.chave = order.order_id;
+                fwrite(&indice, sizeof(INDEX), 1, ind_ord);
+                i=0; 
+            }
+            else 
+                i++;
+            end_order_inicio = ftell(pedidos);
+        }
+        if(i != 0)
         {
             indice.chave = order.order_id;
             fwrite(&indice, sizeof(INDEX), 1, ind_ord);
-            i=0; 
         }
-        else 
-            i++;
-        end_order_inicio = ftell(produtos);
-    }
-    if(i != 0)
-    {
-        indice.chave = order.order_id;
-        fwrite(&indice, sizeof(INDEX), 1, ind_ord);
-    }
 
-    fclose(ind_ord);
-    fclose(ind_prod);
-    fclose(produtos);
-    fclose(pedidos);
+        fclose(ind_ord);
+        fclose(pedidos);
+    }
 }
 
-void reordenar()
+void reordenar(int opcao)
 {
     PRODUCT produto;
     ORDER   pedido;
 
-    FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
-    FILE *tmp_prod = abrir(DIR_DADOS "tmp_prod.bin","wb");
-
-    while(fread(&produto, sizeof(PRODUCT), 1, produtos))
+    if(opcao == 0 || opcao == 2)
     {
-        if (produto.ant != -1)
+        FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
+        FILE *tmp_prod = abrir(DIR_DADOS "tmp_prod.bin","wb");
+
+        while(fread(&produto, sizeof(PRODUCT), 1, produtos))
         {
-            fseek(produtos, produto.ant, SEEK_SET);
-            continue;
+            if (produto.ant != -1)
+            {
+                fseek(produtos, produto.ant, SEEK_SET);
+                continue;
+            }
+
+            if(!produto.exclusao)
+                fwrite(&produto, sizeof(PRODUCT), 1, tmp_prod);
+
+            if (produto.prox != -1)
+                fseek(produtos, produto.prox, SEEK_SET);
         }
 
-        fwrite(&produto, sizeof(PRODUCT), 1, tmp_prod);
+        fclose(produtos);
+        fclose(tmp_prod);
+        remove(PATH_DADOS_PROD);
+        rename(DIR_DADOS "tmp_prod.bin", PATH_DADOS_PROD);
 
-        if (produto.prox != -1)
-            fseek(produtos, produto.prox, SEEK_SET);
+        alterar_config(6, 1);
+        criar_arquivos_indice(0);
     }
 
-    fclose(produtos);
-    fclose(tmp_prod);
-    remove(PATH_DADOS_PROD);
-    rename(DIR_DADOS "tmp_prod.bin", PATH_DADOS_PROD);
-
-    FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
-    FILE *tmp_ped = abrir(DIR_DADOS "tmp_ped.bin","wb");
-
-    while(fread(&pedido, sizeof(ORDER), 1, pedidos))
+    if(opcao == 1 || opcao == 2)
     {
-        if (pedido.ant != -1)
+        FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
+        FILE *tmp_ped = abrir(DIR_DADOS "tmp_ped.bin","wb");
+
+        while(fread(&pedido, sizeof(ORDER), 1, pedidos))
         {
-            fseek(pedidos, pedido.ant, SEEK_SET);
-            continue;
+            if (pedido.ant != -1)
+            {
+                fseek(pedidos, pedido.ant, SEEK_SET);
+                continue;
+            }
+
+            if(!pedido.exclusao)
+                fwrite(&pedido, sizeof(ORDER), 1, tmp_ped);
+
+            if (pedido.prox != -1)
+                fseek(pedidos, pedido.prox, SEEK_SET);
         }
 
-        fwrite(&pedido, sizeof(ORDER), 1, tmp_ped);
+        fclose(pedidos);
+        fclose(tmp_ped);
+        remove(PATH_DADOS_ORDER);
+        rename(DIR_DADOS "tmp_ped.bin", PATH_DADOS_ORDER);
 
-        if (pedido.prox != -1)
-            fseek(pedidos, pedido.prox, SEEK_SET);
+        alterar_config(7, 1);
+        criar_arquivos_indice(1);
     }
-
-    fclose(pedidos);
-    fclose(tmp_ped);
-    remove(PATH_DADOS_ORDER);
-    rename(DIR_DADOS "tmp_ped.bin", PATH_DADOS_ORDER);
-
-    criar_arquivos_indice();
-
-    FILE *conf = abrir(ARQ_CONFIG,"r+b");
-    if(!conf) return;
-    int organizado = 1;
-    fwrite(&organizado,sizeof(int),1,conf);
-    fclose(conf);
 }
 
 void configurar(int item, int novo)
@@ -209,26 +228,31 @@ void configurar(int item, int novo)
     FILE *conf = abrir(ARQ_CONFIG,"r+b");
     if(!conf) return;
     int aux;
-    fread(&aux,sizeof(int),1,conf);
     if(item == 1)
         fwrite(&novo,sizeof(int),1,conf);
     else if (item == 2)
     {
-        fread(&aux,sizeof(int),1,conf);
         fread(&aux,sizeof(int),1,conf);
         fwrite(&novo,sizeof(int),1,conf);
     }
     fclose(conf);
 }
 
+void cria_config_base()
+{
+    FILE *conf = abrir(PATH_CONFIG,"wb");
+    int v[8]={0};
+    v[0] = v[1] = 10;
+    v[6] = v[7] = 1;
+    fwrite(v,sizeof(int),8,conf);
+    fclose(conf);    
+}
+
 void criar_arquivos_base()
 {
     criar_arquivos_dados();
-    criar_arquivos_indice();
-    FILE *conf = abrir(ARQ_CONFIG,"wb");
-    int v[5]={0};
-    fwrite(v,sizeof(int),5,conf);
-    fclose(conf);    
+    criar_arquivos_indice(2);
+    cria_config_base();
 }
 
 

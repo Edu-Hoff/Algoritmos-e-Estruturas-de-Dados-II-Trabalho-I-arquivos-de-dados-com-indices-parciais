@@ -17,7 +17,7 @@ void exibir_menu()
         //Apenas ideia por enquanto
         printf("1 - Produtos Cadastrado\n");   //Feito todos_produtos
         printf("2 - Pedidos Cadastrados\n");   //Feito todos_pedidos
-        printf("3 - Produto (Id - Binaria)\n"); //Feito busca_produto - BINARIA
+        printf("3 - Produto (Id - Binaria)\n");//Feito busca_produto - BINARIA
         printf("4 - Pedido (Id - Binaria)\n"); //Feito busca_pedido - BINARIA
         printf("5 - Produtos (Categoria Alias)\n"); 
         printf("6 - Pedidos (Data)\n");
@@ -110,6 +110,11 @@ void configurar_menu()
 
         printf("1 - Editar Limite Insercoes\n");     
         printf("2 - Editar Limite Remocoes\n");   
+        printf("3 - Reordenar Produtos\n");   
+        printf("4 - Reordenar Pedidos\n");   
+        printf("5 - Reordenar Produtos e Pedidos\n");  
+        printf("6 - Recriar Arquivos Bases\n");    
+        printf("7 - Recriar Arquivos Txt\n");    
         printf("0 - Voltar\n"); 
         switch (op)
         {
@@ -118,6 +123,21 @@ void configurar_menu()
                 break;
             case 2:
                 maximo_remocoes();
+                break;
+            case 3:
+                reordenar(0);
+                break;
+            case 4:
+                reordenar(1);
+                break;
+            case 5:
+                reordenar(2);
+                break;
+            case 6:
+                reorganizar_tudo();
+                break;
+            case 7:
+                debug_txt();
                 break;
             case 0:
                 break;

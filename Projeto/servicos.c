@@ -21,7 +21,7 @@ void reorganizar_tudo()
     printf("Tem certeza que deseja reordenar todos os arquivos? (Y/N)\n");
     scanf("%c", &x);
     if(x=='Y' || x=='y')
-        reordenar();
+        reordenar(2);
     else
         limpar_tela("Reordenacao Cancelada\n");
 }
@@ -29,9 +29,13 @@ void reorganizar_tudo()
 void busca_pedido()
 {
     unsigned long long id;
+    if(!checar_config(7))
+    {
+        printf("O arquivo de pedidos nao esta ordenado, e necessario \nfazer uma reordenacao para realizar a busca binaria");
+        return;
+    }
     printf("Digite o ID do pedido: ");
     scanf("%llu",&id);
-    reordenar(); // se nao tiver organizado
     ORDER pedido = indice_pedido_binaria(id);
     if(pedido.order_id == 0)
         printf("Pedido nao encontrado\n");
@@ -55,9 +59,13 @@ void busca_pedido()
 void busca_produto()
 {
     unsigned long long id;
+    if(!checar_config(6))
+    {
+        printf("O arquivo de produtos nao esta ordenado, e necessario \nfazer uma reordenacao para realizar a busca binaria");
+        return;
+    }
     printf("Digite o ID do produto: ");
     scanf("%llu",&id);
-    reordenar(); // se nao tiver organizado
     PRODUCT produto = indice_produto_binaria(id);
     if(produto.product_id == 0)
         printf("Produto nao encontrado\n");
@@ -123,33 +131,23 @@ void todos_pedidos()
 void maximo_insercoes()
 {
     int maximo;
-    FILE *conf = abrir(ARQ_CONFIG,"rb");
-    fread(&maximo,sizeof(int),1,conf);
-    fread(&maximo,sizeof(int),1,conf);
-    fclose(conf);
-    printf("O maximo atual de insercoes e: %d\n",maximo);
+    printf("O maximo atual de insercoes e: %d\n",checar_config(0));
     printf("------------------------------------\n");
     printf("Informe o novo limite: ");    
     scanf("%d",&maximo);
     printf("------------------------------------\n");
-    configurar(1,maximo);
+    alterar_config(0,maximo);
 }
 
 void maximo_remocoes()
 {
     int maximo;
-    FILE *conf = abrir(ARQ_CONFIG,"rb");
-    fread(&maximo,sizeof(int),1,conf);
-    fread(&maximo,sizeof(int),1,conf);
-    fread(&maximo,sizeof(int),1,conf);
-    fread(&maximo,sizeof(int),1,conf);
-    fclose(conf);
-    printf("O maximo atual de remocoes e: %d\n",maximo);
+    printf("O maximo atual de remocoes e: %d\n",checar_config(1));
     printf("------------------------------------\n");
     printf("Informe o novo limite: ");    
     scanf("%d",&maximo);
     printf("------------------------------------\n");
-    configurar(2,maximo);
+    alterar_config(1,maximo);
 }
 //consulta com exibicoes 
 //insercoes e remocoes 

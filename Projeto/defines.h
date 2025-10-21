@@ -24,6 +24,7 @@
 /**/#define PATH_DADOS_ORDER   DIR_DADOS ARQ_DADOS_ORDER
 /**/#define PATH_INDEX_PROD    DIR_INDEX ARQ_INDEX_PROD
 /**/#define PATH_INDEX_ORDER   DIR_INDEX ARQ_INDEX_ORDER
+/**/#define PATH_CONFIG  DIR_CONFIG ARQ_CONFIG
 /**/
 /**/#define ARQ_INDEX_AMOUNT_PROD 500   //Quantidade de itens por grupo no indice dos produtos
 /**/#define ARQ_INDEX_AMOUNT_ORDER 500  //Quantidade de itens por grupo no indice dos pedidos
