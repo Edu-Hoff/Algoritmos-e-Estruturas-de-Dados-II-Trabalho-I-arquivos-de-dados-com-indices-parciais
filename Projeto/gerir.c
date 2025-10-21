@@ -284,7 +284,86 @@ void atualizar_final(const char * file, long offset, unsigned long long nova_cha
 
 void inserir_produto(PRODUCT produto)
 {
-    
+    // é necessario encontrar em que posicao o novo produto ficara no arquivo de dados de produtos. ele sera inserido no final do arquivo, mas os ponteiros prox e ant devem ser atualizados para manter a ordem
+    FILE *produtos_leitura = abrir(PATH_DADOS_PROD,"r+b");
+    if(!produtos_leitura) return;
+
+    PRODUCT produto_atual;
+    long posicao_atual = 0;
+    long posicao_anterior = -1;
+
+    // Lê os produtos existentes para encontrar a posição correta
+    while(fread(&produto_atual, sizeof(PRODUCT), 1, produtos_leitura))
+    {
+        if(produto.product_id < produto_atual.product_id) {
+            break; // Encontrou a posição onde o novo produto deve ser inserido
+        }
+        posicao_anterior = posicao_atual; // Atualiza a posição anterior
+        posicao_atual += 1; // Avança para o próximo índice de registro (não bytes)
+    }
+
+    // Atualiza os ponteiros prox e ant do novo produto
+    produto.ant = posicao_anterior; // O novo produto aponta para o anterior
+    // Se chegou ao final do arquivo, prox deve ser -1
+    produto.prox = feof(produtos_leitura) ? -1 : posicao_atual; // O novo produto aponta para o próximo, se houver
+
+    fseek(produtos_leitura, 0, SEEK_END);
+    long posicao_novo_produto = ftell(produtos_leitura) / sizeof(PRODUCT);
+
+    if (posicao_anterior != -1) {
+        // O novo produto será adicionado ao final do arquivo
+
+        // Atualiza o produto anterior para apontar para o novo produto
+        fseek(produtos_leitura, posicao_anterior * sizeof(PRODUCT), SEEK_SET);
+        PRODUCT produto_anterior;
+        fread(&produto_anterior, sizeof(PRODUCT), 1, produtos_leitura);
+        produto_anterior.prox = posicao_novo_produto; // Atualiza o próximo do anterior
+        fseek(produtos_leitura, -sizeof(PRODUCT), SEEK_CUR);
+        fwrite(&produto_anterior, sizeof(PRODUCT), 1, produtos_leitura);
+
+        if (produto.prox != -1) {
+            // Atualiza o produto posterior para apontar para o novo produto
+            fseek(produtos_leitura, produto.prox * sizeof(PRODUCT), SEEK_SET);
+            PRODUCT produto_posterior;
+            fread(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
+            produto_posterior.ant = posicao_novo_produto;
+            fseek(produtos_leitura, -sizeof(PRODUCT), SEEK_CUR);
+            fwrite(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
+        }
+    }
+
+    // Se o novo produto for o primeiro, atualiza o ponteiro do início
+    if (posicao_anterior == -1) {
+        // O novo produto será o primeiro
+
+        if (produto.prox != -1) {
+            // Atualiza o produto que era o primeiro para apontar para o novo produto
+            fseek(produtos_leitura, produto.prox * sizeof(PRODUCT), SEEK_SET);
+            PRODUCT produto_posterior;
+            fread(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
+            produto_posterior.ant = posicao_novo_produto;
+            fseek(produtos_leitura, -sizeof(PRODUCT), SEEK_CUR);
+            fwrite(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
+        }
+    }
+
+    // Adiciona o novo produto ao final do arquivo
+    fseek(produtos_leitura, 0, SEEK_END);
+    fwrite(&produto, sizeof(PRODUCT), 1, produtos_leitura);
+    fclose(produtos_leitura);
+
+    // atualiza contador de insercoes de produtos e, se atingir o limite configurado, reordena
+    int num_insercoes = checar_config(2);
+    int max_insercoes = checar_config(0);
+    if (num_insercoes < 0) 
+        num_insercoes = 0; // segurança caso função retorne valor inválido
+    num_insercoes++;
+    alterar_config(2, num_insercoes);
+    if (max_insercoes > 0 && num_insercoes >= max_insercoes)
+    {
+        reordenar(0);          // reordena arquivo de produtos
+        alterar_config(2, 0);  // reseta contador de inserções
+    }
 }
 
 void inserir_pedido(ORDER pedido)
