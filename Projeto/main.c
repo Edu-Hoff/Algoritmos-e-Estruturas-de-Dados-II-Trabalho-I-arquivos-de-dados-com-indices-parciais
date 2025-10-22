@@ -190,7 +190,7 @@ void menu()
 void checar_arquivos()
 {
     if(!existe_arquivo(PATH_DADOS_ORDER,"rb") || !existe_arquivo(PATH_DADOS_PROD,"rb") || !existe_arquivo(PATH_INDEX_ORDER,"rb") 
-    || !existe_arquivo(PATH_INDEX_PROD,"rb")  || !existe_arquivo(PATH_CONFIG,"rb")     || !existe_arquivo(PATH_DADOS_ORIGEM,"w"))
+    || !existe_arquivo(PATH_INDEX_PROD,"rb")  || !existe_arquivo(PATH_CONFIG,"rb")     || !existe_arquivo(PATH_DADOS_ORIGEM,"r"))
         criar_arquivos_base();
 }
 
