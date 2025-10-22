@@ -383,7 +383,38 @@ void remover_produto_pedido(unsigned long long order_id, unsigned long long prod
 
 void remover_produto(unsigned long long product_id)
 {
+    // Localiza o produto pelo product_id, marca exclusao = 1 e atualiza no arquivo
+    FILE *produtos = abrir(PATH_DADOS_PROD, "r+b");
+    if (!produtos) return;
+
+    PRODUCT produto;
+    long pos = 0;
+    int encontrado = 0;
+    while (fread(&produto, sizeof(PRODUCT), 1, produtos)) {
+        if (produto.product_id == product_id) {
+            produto.exclusao = 1;
+            encontrado = 1;
+            fseek(produtos, -sizeof(PRODUCT), SEEK_CUR);
+            fwrite(&produto, sizeof(PRODUCT), 1, produtos);
+            break;
+        }
+        pos++;
+    }
+    fclose(produtos);
+
+    if (!encontrado) 
+        return;
     
+
+    int num_remocoes = checar_config(4);
+    num_remocoes++;
+    int max_remocoes = checar_config(1);
+    if (max_remocoes > 0 && num_remocoes >= max_remocoes)
+    {
+        reordenar(1);
+        num_remocoes = 0;
+    }
+    alterar_config(4, num_remocoes);
 }
 
 void remover_pedido(unsigned long long order_id)
