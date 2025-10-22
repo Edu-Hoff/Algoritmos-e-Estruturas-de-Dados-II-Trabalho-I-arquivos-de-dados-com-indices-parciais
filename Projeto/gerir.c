@@ -613,5 +613,66 @@ void remover_pedido(INDEX indice, unsigned long long order_id)
 
 void criar_novo_csv()
 {
+    reordenar(2);
+    PRODUCT *produtos_mem =(PRODUCT *) malloc(MAX_RECORDS * sizeof(PRODUCT));
+    ORDER   *pedidos_mem  =(ORDER *) malloc(MAX_RECORDS * sizeof(ORDER));
+    PRODUCT prod;
+    ORDER   ped;
+    int n_prod = 0, n_ped = 0;
+    FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
+    FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
+    if(!produtos || !pedidos) return;
+    limpar_tela("");  
+    while(fread(&prod, sizeof(produtos), 1, produtos))
+    {
+        if(n_prod % 500 == 0)
+            printf("\rProdutos: %d",n_prod);
 
+        produtos_mem[n_prod++] = prod;
+    }
+    printf("\n");
+    while (fread(&ped, sizeof(ORDER), 1, pedidos))
+    {
+        if(n_ped % 5000 == 0)
+            printf("\rPedidos: %d",n_ped);
+        pedidos_mem[n_ped++]   = ped;
+    }
+    printf("\n");
+    fclose(produtos);
+    fclose(pedidos);
+
+    FILE *csv = fopen(PATH_DADOS_NOVO, "wb");
+    char linha_final[501];
+    for(int i=0; i<n_ped; i++)
+    {
+        for(int j=0; j<pedidos_mem[i].products_amount; j++)
+        {
+            PRODUCT produto = produtos_mem[busca_binaria_vet(produtos_mem, n_prod, pedidos_mem[i].products_id[j])];
+            snprintf(linha_final, sizeof(linha_final), "%d-%d-%d %d:%d:%d UTC,%llu,%llu,%d,%llu,%s,%d,%f,%llu,%c,%s,%s,%s\n",
+                pedidos_mem[i].date_time.year,
+                pedidos_mem[i].date_time.month,
+                pedidos_mem[i].date_time.day,
+                pedidos_mem[i].date_time.hour,
+                pedidos_mem[i].date_time.min,
+                pedidos_mem[i].date_time.sec,
+                pedidos_mem[i].order_id,
+                pedidos_mem[i].products_id[j],
+                pedidos_mem[i].SKU_in_order[j],
+                produto.category_id,
+                produto.category_alias,
+                produto.brand_id,
+                produto.price,
+                pedidos_mem[i].user_id,
+                produto.product_gender,
+                produto.main_color,
+                produto.main_metal,
+                produto.main_gem
+            );
+            fwrite(linha_final, sizeof(linha_final), 1, csv);
+        }
+    }
+    fclose(csv);
+
+    free(produtos_mem); 
+    free(pedidos_mem);
 }

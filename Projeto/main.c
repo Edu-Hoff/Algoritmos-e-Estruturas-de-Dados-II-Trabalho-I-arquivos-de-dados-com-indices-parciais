@@ -144,6 +144,9 @@ void configurar_menu()
             case 7:
                 debug_txt();
                 break;
+            case 8:
+                criar_novo_csv();
+                break;
             case 0:
                 break;
             default:

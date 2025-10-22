@@ -1,6 +1,6 @@
 import csv
 
-arquivo = r"D:\EduFaculdade\Semestre4\AlgoritmoseEstruturasdeDados2\Algoritmos-e-Estruturas-de-Dados-II-Trabalho-I-arquivos-de-dados-com-indices-parciais\Arquivos\Dados\dados_errados.csv"
+arquivo = r"D:\EduFaculdade\Semestre4\AlgoritmoseEstruturasdeDados2\Algoritmos-e-Estruturas-de-Dados-II-Trabalho-I-arquivos-de-dados-com-indices-parciais\Arquivos\Dados\Originais\dados_errados.csv"
 COLUNAS_ALVO = 13
 linhas_fora_do_padrao = {}
 
@@ -86,7 +86,7 @@ def inserir_no_meio(string_original, string_a_inserir, indice_insercao):
     return string_final
     
 linhas_indices = linhas_fora_do_padrao[11]
-with open(r"D:\EduFaculdade\Semestre4\AlgoritmoseEstruturasdeDados2\Algoritmos-e-Estruturas-de-Dados-II-Trabalho-I-arquivos-de-dados-com-indices-parciais\Arquivos\Dados\dados_errados.csv", 'r', encoding='utf-8') as arquivo:
+with open(r"D:\EduFaculdade\Semestre4\AlgoritmoseEstruturasdeDados2\Algoritmos-e-Estruturas-de-Dados-II-Trabalho-I-arquivos-de-dados-com-indices-parciais\Arquivos\Dados\Originais\dados_errados.csv", 'r', encoding='utf-8') as arquivo:
     linhas = arquivo.readlines()
     for indice in linhas_indices:
         linha = linhas[indice-1]

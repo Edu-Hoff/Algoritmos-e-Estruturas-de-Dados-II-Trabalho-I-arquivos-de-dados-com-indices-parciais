@@ -15,6 +15,26 @@ void limpar_tela(const char *msg)
         printf("%s",msg);
 }
 
+int busca_binaria_vet(PRODUCT vetor[], int tamanho, unsigned long long chave) {
+    int inicio = 0;
+    int fim = tamanho - 1;
+    int meio;
+
+    while (inicio <= fim) {
+        meio = (inicio + fim) / 2;
+
+        if (vetor[meio].product_id == chave) {
+            return meio;
+        } else if (vetor[meio].product_id < chave) {
+            inicio = meio + 1;
+        } else { 
+            fim = meio - 1;
+        }
+    }
+
+    return -1;
+}
+
 int existe_arquivo(const char *nome, const char *modo)
 {
     FILE *f = fopen(nome,modo);

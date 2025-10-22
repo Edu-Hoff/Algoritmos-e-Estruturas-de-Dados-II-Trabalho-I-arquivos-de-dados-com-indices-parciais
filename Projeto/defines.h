@@ -12,6 +12,8 @@
 /**/#define ARQ_CONFIG "config.bin"                 // Nome do arquivo de configuracoes
 /**/
 /**/#define ARQ_DADOS_ORIGEM "dados.csv"            // Nome do arquivo CSV onde estão os dados
+/**/#define ARQ_DADOS_NOVO "novo_dados.csv"         // Nome do arquivo CSV gerado
+/**/
 /**/#define ARQ_DADOS_PROD   "products.bin"         // Nome do arquivo de dados dos produtos
 /**/#define ARQ_DADOS_ORDER  "orders.bin"           // Nome do arquivo de dados dos pedidos
 /**/
@@ -20,6 +22,7 @@
 /**/
 /**//* ---- Caminhos completos ---- */
 /**/#define PATH_DADOS_ORIGEM  DIR_DADOS ARQ_DADOS_ORIGEM
+/**/#define PATH_DADOS_NOVO  DIR_DADOS ARQ_DADOS_NOVO
 /**/#define PATH_DADOS_PROD    DIR_DADOS ARQ_DADOS_PROD
 /**/#define PATH_DADOS_ORDER   DIR_DADOS ARQ_DADOS_ORDER
 /**/#define PATH_INDEX_PROD    DIR_INDEX ARQ_INDEX_PROD
