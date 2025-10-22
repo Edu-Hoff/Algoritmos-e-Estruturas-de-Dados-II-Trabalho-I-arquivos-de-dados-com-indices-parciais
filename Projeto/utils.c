@@ -17,7 +17,7 @@ void limpar_tela(const char *msg)
 
 int existe_arquivo(const char *nome, const char *modo)
 {
-    FILE *f = abrir(nome,modo);
+    FILE *f = fopen(nome,modo);
     if(!f) return 0;
     fclose(f);
     return 1;

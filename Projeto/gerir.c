@@ -79,6 +79,7 @@ void criar_arquivos_dados()
             pedidos_mem[indice].SKU_in_order[pedidos_mem[indice].products_amount++]=sku;
         }
     }
+    printf("\n");
     qsort(produtos_mem, n_prod, sizeof(PRODUCT), cmp_product);
     qsort(pedidos_mem, n_ped, sizeof(ORDER), cmp_order);
 

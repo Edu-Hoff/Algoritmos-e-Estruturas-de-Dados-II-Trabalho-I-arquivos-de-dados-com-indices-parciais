@@ -14,7 +14,6 @@ void exibir_menu()
         printf("==================================\n");
         printf("=====         Exbir          =====\n");
         printf("==================================\n\n");
-        //Apenas ideia por enquanto
         printf("1 - Produtos Cadastrado\n");            //Feito todos_produtos                  - CORRETO
         printf("2 - Pedidos Cadastrados\n");            //Feito todos_pedidos                   - CORRETO
         printf("3 - Produto (Id - Binaria)\n");         //Feito busca_produto - BINARIA
@@ -24,6 +23,7 @@ void exibir_menu()
         printf("7 - Pedidos (Id Usuario)\n");           //Feito pedidos_por_usuario             - CORRETO
         printf("0 - Voltar\n"); 
         scanf("%d",&op);
+        limpar_tela("");
         switch (op)
         {
             case 1:
@@ -71,6 +71,7 @@ void inserir_remover_menu()
         printf("6 - Remover Produto de um Pedido\n");     
         printf("0 - Voltar\n"); 
         scanf("%d",&op);
+        limpar_tela("");
         switch (op)
         {
             case 1:
@@ -119,6 +120,7 @@ void configurar_menu()
         printf("8 - Criar Novo CSV\n");
         printf("0 - Voltar\n"); 
         scanf("%d",&op);
+        limpar_tela("");
         switch (op)
         {
             case 1:
@@ -159,11 +161,12 @@ void menu()
         printf("===== Gerenciador de Pedidos =====\n");
         printf("==================================\n\n");
 
-        printf("1 - Exibir Dados\n");     
-        printf("2 - Inserir/Remover Dados\n");   
+        printf("1 - Exibir Dados\n");               //Feito
+        printf("2 - Inserir/Remover Dados\n");      //Feito
         printf("3 - Configurar Reordenacao\n");     //Feito
         printf("0 - Sair\n");
         scanf("%d",&op);
+        limpar_tela("");
         switch (op)
         {
             case 1:
@@ -186,8 +189,8 @@ void menu()
 
 void checar_arquivos()
 {
-    if(!existe(PATH_DADOS_ORDER,"rb") || !existe(PATH_DADOS_PROD,"rb") || !existe(PATH_INDEX_ORDER,"rb") 
-    || !existe(PATH_INDEX_PROD,"rb")  || !existe(PATH_CONFIG,"rb")     || !existe(PATH_DADOS_ORIGEM,"w"))
+    if(!existe_arquivo(PATH_DADOS_ORDER,"rb") || !existe_arquivo(PATH_DADOS_PROD,"rb") || !existe_arquivo(PATH_INDEX_ORDER,"rb") 
+    || !existe_arquivo(PATH_INDEX_PROD,"rb")  || !existe_arquivo(PATH_CONFIG,"rb")     || !existe_arquivo(PATH_DADOS_ORIGEM,"w"))
         criar_arquivos_base();
 }
 
@@ -195,7 +198,8 @@ int main ()
 {
     checar_arquivos();
     menu();
-    printf("\n--------------------------------------------------------------------------------\n");
+    limpar_tela("Obrigado por usar o sistema");
+    printf("\n----------------------------------------\n");
     printf("PROGRAMA FINALIZADO");
     getchar(); getchar();
     return 0;
