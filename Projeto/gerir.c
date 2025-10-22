@@ -20,20 +20,45 @@ int cmp_order(const void *a, const void *b)
     return 0;
 }
 
+void atualizar_inicio_indice(const char * file, long endereco, long novo_inicio)
+{
+    FILE *f = abrir(file,"rb+");
+    if(!f) return;
+    INDEX novo_ind;
+    while(fread(&novo_ind, sizeof(INDEX), 1, f) == 1) 
+        if (novo_ind.endereco == endereco) break;
+    novo_ind.endereco = novo_inicio;
+    fseek(f, -sizeof(INDEX), SEEK_CUR);
+    fwrite(&novo_ind, sizeof(INDEX), 1, f);
+    fclose(f);
+}
+
+void atualizar_final_indice(const char * file, long endereco, unsigned long long nova_chave)
+{
+    FILE *f = abrir(file,"rb+");
+    if(!f) return;
+    INDEX novo_ind;
+    while(fread(&novo_ind, sizeof(INDEX), 1, f) == 1) 
+        if (novo_ind.endereco == endereco) break;
+    novo_ind.chave = nova_chave;
+    fseek(f, -sizeof(INDEX), SEEK_CUR);
+    fwrite(&novo_ind, sizeof(INDEX), 1, f);
+    fclose(f);
+}
+
 void criar_arquivos_dados()
 {
     PRODUCT *produtos_mem =(PRODUCT *) malloc(MAX_RECORDS * sizeof(PRODUCT));
     ORDER   *pedidos_mem  =(ORDER *) malloc(MAX_RECORDS * sizeof(ORDER));
     int n_prod = 0, n_ped = 0;
     FILE *dados = abrir(PATH_DADOS_ORIGEM,"r");
-    char linha[122 + (30 * AMOUNT_MAX) + SIZE_CATEGORY + (3 * SIZE_MAIN_CMG) + 10 + 30];  
+    char linha[122 + (30 * AMOUNT_MAX) + SIZE_CATEGORY + (3 * SIZE_MAIN_CMG) + 10 + 30];
+    limpar_tela("");  
     while(fgets(linha, sizeof(linha), dados))
     {
         if(n_ped % 5000 == 0)
-        {
-            limpar_tela("");
-            printf("Pedidos: %d - Produtos: %d",n_ped,n_prod);
-        }
+            printf("\rPedidos: %d - Produtos: %d",n_ped,n_prod);
+
         linha[strcspn(linha, "\n")] = '\0';
         int sku;
         PRODUCT prod;
@@ -41,7 +66,7 @@ void criar_arquivos_dados()
         desconstruir_linha(linha, &sku, &ped, &prod);
         if(!existe_produto(produtos_mem,prod.product_id,n_prod))
             produtos_mem[n_prod++] = prod;
-        int indice = existe(pedidos_mem, ped.order_id, n_ped);
+        int indice = existe_pedido(pedidos_mem, ped.order_id, n_ped);
         if(indice == -1)
         {
             ped.products_id[ped.products_amount]=prod.product_id;
@@ -64,6 +89,8 @@ void criar_arquivos_dados()
     FILE *fped = fopen(PATH_DADOS_ORDER, "wb");
     fwrite(pedidos_mem, sizeof(ORDER), n_ped, fped);
     fclose(fped);
+
+    fclose(dados);
 
     free(produtos_mem); 
     free(pedidos_mem);
@@ -162,25 +189,38 @@ void reordenar(int opcao)
 {
     PRODUCT produto;
     ORDER   pedido;
+    unsigned long long ant = 0;
 
     if(opcao == 0 || opcao == 2)
     {
+        limpar_tela("");
+        int n_prod = 0;
         FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
         FILE *tmp_prod = abrir(DIR_DADOS "tmp_prod.bin","wb");
 
         while(fread(&produto, sizeof(PRODUCT), 1, produtos))
-        {
             if (produto.ant != -1)
             {
                 fseek(produtos, produto.ant, SEEK_SET);
-                continue;
+            }
+            else
+            {
+                fseek(produtos, -sizeof(PRODUCT), SEEK_CUR);
+                break;
             }
 
+        while(fread(&produto, sizeof(PRODUCT), 1, produtos) && ant < produto.product_id)
+        {
+            ant = produto.product_id;
+            n_prod++;
+            long prox = produto.prox;
+            produto.ant = produto.prox = -1;
+            if(n_prod % 200 == 0)
+                printf("\rProdutos: %d",n_prod);
             if(!produto.exclusao)
                 fwrite(&produto, sizeof(PRODUCT), 1, tmp_prod);
-
-            if (produto.prox != -1)
-                fseek(produtos, produto.prox, SEEK_SET);
+            if (prox != -1)
+                fseek(produtos, prox, SEEK_SET);
         }
 
         fclose(produtos);
@@ -189,27 +229,44 @@ void reordenar(int opcao)
         rename(DIR_DADOS "tmp_prod.bin", PATH_DADOS_PROD);
 
         alterar_config(6, 1);
+        alterar_config(2, 0);
+        alterar_config(4, 0);
         criar_arquivos_indice(0);
+        printf("\n");
     }
-
     if(opcao == 1 || opcao == 2)
     {
+        ant = 0;
+        int n_ped = 0;
+        if(opcao == 1) limpar_tela("");
         FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
         FILE *tmp_ped = abrir(DIR_DADOS "tmp_ped.bin","wb");
 
         while(fread(&pedido, sizeof(ORDER), 1, pedidos))
-        {
             if (pedido.ant != -1)
             {
                 fseek(pedidos, pedido.ant, SEEK_SET);
                 continue;
             }
+            else
+            {
+                fseek(pedidos, -sizeof(ORDER), SEEK_CUR);
+                break;
+            }
 
+        while(fread(&pedido, sizeof(ORDER), 1, pedidos) && ant < pedido.order_id)
+        {
+            ant = pedido.order_id;
+            n_ped++;
+            long prox = pedido.prox;
+            pedido.ant = pedido.prox = -1;
+            if(n_ped % 200 == 0)
+                printf("\rPedidos: %d",n_ped);
             if(!pedido.exclusao)
                 fwrite(&pedido, sizeof(ORDER), 1, tmp_ped);
 
-            if (pedido.prox != -1)
-                fseek(pedidos, pedido.prox, SEEK_SET);
+            if (prox != -1)
+                fseek(pedidos, prox, SEEK_SET);
         }
 
         fclose(pedidos);
@@ -218,24 +275,11 @@ void reordenar(int opcao)
         rename(DIR_DADOS "tmp_ped.bin", PATH_DADOS_ORDER);
 
         alterar_config(7, 1);
+        alterar_config(3, 0);
+        alterar_config(5, 0);
         criar_arquivos_indice(1);
+        printf("\n");
     }
-}
-
-void configurar(int item, int novo)
-{
-    if((item != 1 && item != 2) || novo < 0) return;
-    FILE *conf = abrir(ARQ_CONFIG,"r+b");
-    if(!conf) return;
-    int aux;
-    if(item == 1)
-        fwrite(&novo,sizeof(int),1,conf);
-    else if (item == 2)
-    {
-        fread(&aux,sizeof(int),1,conf);
-        fwrite(&novo,sizeof(int),1,conf);
-    }
-    fclose(conf);
 }
 
 void cria_config_base()
@@ -248,6 +292,24 @@ void cria_config_base()
     fclose(conf);    
 }
 
+int esta_pedido(unsigned long long produto_id)
+{
+    FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
+    if(!pedidos) return 0;
+    ORDER pedido;
+    while(fread(&pedido, sizeof(ORDER), 1, pedidos))
+    {
+        for(int i=0; i<pedido.products_amount; i++)
+            if(pedido.products_id[i] == produto_id)
+            {
+                fclose(pedidos);
+                return 1;
+            }
+    }
+    fclose(pedidos);
+    return 0;
+}
+
 void criar_arquivos_base()
 {
     criar_arquivos_dados();
@@ -255,98 +317,73 @@ void criar_arquivos_base()
     cria_config_base();
 }
 
-
-void atualizar_inicio(const char * file, long offset, long novo_inicio)
-{
-    FILE *f = abrir(file,"rb+");
-    if(!f) return;
-    fseek(f, offset, SEEK_SET);
-    INDEX novo_ind;
-    fread(&novo_ind, sizeof(INDEX), 1, f);
-    novo_ind.endereco = novo_inicio;
-    fseek(f, -sizeof(INDEX), SEEK_CUR);
-    fwrite(&novo_ind, sizeof(INDEX), 1, f);
-    fclose(f);
-}
-
-void atualizar_final(const char * file, long offset, unsigned long long nova_chave)
-{
-    FILE *f = abrir(file,"rb+");
-    if(!f) return;
-    fseek(f, offset, SEEK_SET);
-    INDEX novo_ind;
-    fread(&novo_ind, sizeof(INDEX), 1, f);
-    novo_ind.chave = nova_chave;
-    fseek(f, -sizeof(INDEX), SEEK_CUR);
-    fwrite(&novo_ind, sizeof(INDEX), 1, f);
-    fclose(f);
-}
-
-void inserir_produto(PRODUCT produto)
+void inserir_produto(INDEX indice, PRODUCT produto)
 {
     // é necessario encontrar em que posicao o novo produto ficara no arquivo de dados de produtos. ele sera inserido no final do arquivo, mas os ponteiros prox e ant devem ser atualizados para manter a ordem
     FILE *produtos_leitura = abrir(PATH_DADOS_PROD,"r+b");
-    if(!produtos_leitura) return;
+    if(!produtos_leitura  || indice.endereco == -1) return;
+    produto.ant = produto.prox = -1;
+    produto.exclusao = 0;
 
-    PRODUCT produto_atual;
-    long posicao_atual = 0;
-    long posicao_anterior = -1;
+    PRODUCT produto_atual, produto_anterior;
+    long posicao_atual,posicao_anterior = -1;
 
     // Lê os produtos existentes para encontrar a posição correta
+    fseek(produtos_leitura, indice.endereco, SEEK_SET);
+    posicao_atual = ftell(produtos_leitura);
     while(fread(&produto_atual, sizeof(PRODUCT), 1, produtos_leitura))
     {
-        if(produto.product_id < produto_atual.product_id) {
+        if(produto.product_id < produto_atual.product_id || produto_atual.product_id == indice.chave) {
             break; // Encontrou a posição onde o novo produto deve ser inserido
         }
+        if(produto.product_id == produto_atual.product_id) {
+            fclose(produtos_leitura);
+            return;
+        }
+        produto_anterior = produto_atual;
         posicao_anterior = posicao_atual; // Atualiza a posição anterior
-        posicao_atual += 1; // Avança para o próximo índice de registro (não bytes)
+        if(produto_atual.prox != -1)
+            fseek(produtos_leitura, produto_atual.prox, SEEK_SET);
+        posicao_atual = ftell(produtos_leitura); // Avança para o próximo índice de registro 
     }
-
-    // Atualiza os ponteiros prox e ant do novo produto
-    produto.ant = posicao_anterior; // O novo produto aponta para o anterior
-    // Se chegou ao final do arquivo, prox deve ser -1
-    produto.prox = feof(produtos_leitura) ? -1 : posicao_atual; // O novo produto aponta para o próximo, se houver
 
     fseek(produtos_leitura, 0, SEEK_END);
-    long posicao_novo_produto = ftell(produtos_leitura) / sizeof(PRODUCT);
+    long posicao_novo_produto = ftell(produtos_leitura);
 
-    if (posicao_anterior != -1) {
-        // O novo produto será adicionado ao final do arquivo
+    if(produto.product_id < indice.chave)
+    {
+        produto.prox = posicao_atual;
+    }
+    else{
+        if(produto.product_id == indice.chave) {
+            fclose(produtos_leitura);
+            return;
+        }
+        produto_anterior = produto_atual;
+        posicao_anterior = posicao_atual; 
+        produto_anterior.prox = posicao_novo_produto;
+        atualizar_final_indice(PATH_INDEX_PROD, indice.endereco, produto.product_id);
+    }
 
-        // Atualiza o produto anterior para apontar para o novo produto
-        fseek(produtos_leitura, posicao_anterior * sizeof(PRODUCT), SEEK_SET);
-        PRODUCT produto_anterior;
-        fread(&produto_anterior, sizeof(PRODUCT), 1, produtos_leitura);
-        produto_anterior.prox = posicao_novo_produto; // Atualiza o próximo do anterior
-        fseek(produtos_leitura, -sizeof(PRODUCT), SEEK_CUR);
+    if(posicao_anterior == -1)
+    {
+        produto_atual.ant = posicao_novo_produto;
+        atualizar_inicio_indice(PATH_INDEX_PROD, indice.endereco, posicao_novo_produto);
+    }
+    else{
+        produto_anterior.prox = posicao_novo_produto;
+    }
+
+    // O novo produto será adicionado ao final do arquivo
+    if(posicao_anterior == -1)
+    {
+        fseek(produtos_leitura, posicao_atual, SEEK_SET);
+        fwrite(&produto_atual, sizeof(PRODUCT), 1, produtos_leitura);
+    }else{
+        fseek(produtos_leitura, posicao_anterior, SEEK_SET);
         fwrite(&produto_anterior, sizeof(PRODUCT), 1, produtos_leitura);
-
-        if (produto.prox != -1) {
-            // Atualiza o produto posterior para apontar para o novo produto
-            fseek(produtos_leitura, produto.prox * sizeof(PRODUCT), SEEK_SET);
-            PRODUCT produto_posterior;
-            fread(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
-            produto_posterior.ant = posicao_novo_produto;
-            fseek(produtos_leitura, -sizeof(PRODUCT), SEEK_CUR);
-            fwrite(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
-        }
     }
-
-    // Se o novo produto for o primeiro, atualiza o ponteiro do início
-    if (posicao_anterior == -1) {
-        // O novo produto será o primeiro
-
-        if (produto.prox != -1) {
-            // Atualiza o produto que era o primeiro para apontar para o novo produto
-            fseek(produtos_leitura, produto.prox * sizeof(PRODUCT), SEEK_SET);
-            PRODUCT produto_posterior;
-            fread(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
-            produto_posterior.ant = posicao_novo_produto;
-            fseek(produtos_leitura, -sizeof(PRODUCT), SEEK_CUR);
-            fwrite(&produto_posterior, sizeof(PRODUCT), 1, produtos_leitura);
-        }
-    }
-
+        
     // Adiciona o novo produto ao final do arquivo
     fseek(produtos_leitura, 0, SEEK_END);
     fwrite(&produto, sizeof(PRODUCT), 1, produtos_leitura);
@@ -358,38 +395,141 @@ void inserir_produto(PRODUCT produto)
     if (num_insercoes < 0) 
         num_insercoes = 0; // segurança caso função retorne valor inválido
     num_insercoes++;
-    alterar_config(2, num_insercoes);
     if (max_insercoes > 0 && num_insercoes >= max_insercoes)
     {
         reordenar(0);          // reordena arquivo de produtos
-        alterar_config(2, 0);  // reseta contador de inserções
+        alterar_config(6, 1);
+        num_insercoes = 0;
     }
+    else
+        alterar_config(6, 0);
+    alterar_config(2, num_insercoes);
 }
 
-void inserir_pedido(ORDER pedido)
+void inserir_pedido(INDEX indice, ORDER pedido)
 {
-    
+    FILE *pedidos_leitura = abrir(PATH_DADOS_ORDER,"r+b");
+    if(!pedidos_leitura  || indice.endereco == -1) return;
+    pedido.ant = pedido.prox = -1;
+    pedido.exclusao = 0;
+
+    ORDER pedido_atual, pedido_anterior;
+    long posicao_atual,posicao_anterior = -1;
+
+    fseek(pedidos_leitura, indice.endereco, SEEK_SET);
+    posicao_atual = ftell(pedidos_leitura);
+    while(fread(&pedido_atual, sizeof(ORDER), 1, pedidos_leitura))
+    {
+        if(pedido.order_id < pedido_atual.order_id || pedido_atual.order_id == indice.chave) {
+            break; 
+        }
+        if(pedido.order_id == pedido_atual.order_id) {
+            fclose(pedidos_leitura);
+            return;
+        }
+        pedido_anterior = pedido_atual;
+        posicao_anterior = posicao_atual; // Atualiza a posição anterior
+        if(pedido_atual.prox != -1)
+            fseek(pedidos_leitura, pedido_atual.prox, SEEK_SET);
+        posicao_atual = ftell(pedidos_leitura); // Avança para o próximo índice de registro 
+    }
+
+    fseek(pedidos_leitura, 0, SEEK_END);
+    long posicao_novo_pedido = ftell(pedidos_leitura);
+
+    if(pedido.order_id < indice.chave)
+    {
+        pedido.prox = posicao_atual;
+    }
+    else{
+        if(pedido.order_id == indice.chave) {
+            fclose(pedidos_leitura);
+            return;
+        }
+        pedido_anterior = pedido_atual;
+        posicao_anterior = posicao_atual; 
+        pedido_anterior.prox = posicao_novo_pedido;
+        atualizar_final_indice(PATH_INDEX_ORDER, indice.endereco, pedido.order_id);
+    }
+
+    if(posicao_anterior == -1)
+    {
+        pedido_atual.ant = posicao_novo_pedido;
+        atualizar_inicio_indice(PATH_INDEX_ORDER, indice.endereco, posicao_novo_pedido);
+    }
+    else{
+        pedido_anterior.prox = posicao_novo_pedido;
+    }
+
+    if(posicao_anterior == -1)
+    {
+        fseek(pedidos_leitura, posicao_atual, SEEK_SET);
+        fwrite(&pedido_atual, sizeof(ORDER), 1, pedidos_leitura);
+    }else{
+        fseek(pedidos_leitura, posicao_anterior, SEEK_SET);
+        fwrite(&pedido_anterior, sizeof(ORDER), 1, pedidos_leitura);
+    }
+        
+    fseek(pedidos_leitura, 0, SEEK_END);
+    fwrite(&pedido, sizeof(ORDER), 1, pedidos_leitura);
+    fclose(pedidos_leitura);
+
+    int num_insercoes = checar_config(3);
+    int max_insercoes = checar_config(0);
+    if (num_insercoes < 0) 
+        num_insercoes = 0; // segurança caso função retorne valor inválido
+    num_insercoes++;
+    if (max_insercoes > 0 && num_insercoes >= max_insercoes)
+    {
+        reordenar(1);          // reordena arquivo de pedidos
+        alterar_config(7, 1);
+        num_insercoes = 0;
+    }
+    else
+        alterar_config(7, 0);
+    alterar_config(3, num_insercoes);
 }
 
-void inserir_produto_pedido(unsigned long long order_id, unsigned long long product_id)
+void atualizar_pedido(INDEX indice, ORDER pedido)
 {
-    
+    FILE *pedidos_leitura = abrir(PATH_DADOS_ORDER,"r+b");
+    if(!pedidos_leitura  || indice.endereco == -1) return;
+
+    ORDER pedido_atual;
+
+    fseek(pedidos_leitura, indice.endereco, SEEK_SET);
+    while(fread(&pedido_atual, sizeof(ORDER), 1, pedidos_leitura))
+    {
+        if(pedido.order_id == pedido_atual.order_id) {
+            fseek(pedidos_leitura, -sizeof(ORDER), SEEK_CUR);
+            fwrite(&pedido, sizeof(ORDER), 1, pedidos_leitura);
+            fclose(pedidos_leitura);
+            return;
+        }
+        if(pedido_atual.prox != -1)
+            fseek(pedidos_leitura, pedido_atual.prox, SEEK_SET);
+    }
+    fclose(pedidos_leitura);
+    return;
 }
 
-void remover_produto_pedido(unsigned long long order_id, unsigned long long product_id)
-{
-    
-}
-
-void remover_produto(unsigned long long product_id)
+void remover_produto(INDEX indice, unsigned long long product_id)
 {
     // Localiza o produto pelo product_id, marca exclusao = 1 e atualiza no arquivo
+
+    if(esta_pedido(product_id))
+    {
+        printf("O produto %llu ja esta em algum pedido, nao pode ser removido\n",product_id);
+        return;
+    }
+
     FILE *produtos = abrir(PATH_DADOS_PROD, "r+b");
-    if (!produtos) return;
+    if (!produtos || indice.endereco == -1) return;
 
     PRODUCT produto;
-    long pos = 0;
+    long inicio = indice.endereco;
     int encontrado = 0;
+    fseek(produtos, inicio, SEEK_SET);
     while (fread(&produto, sizeof(PRODUCT), 1, produtos)) {
         if (produto.product_id == product_id) {
             produto.exclusao = 1;
@@ -398,7 +538,13 @@ void remover_produto(unsigned long long product_id)
             fwrite(&produto, sizeof(PRODUCT), 1, produtos);
             break;
         }
-        pos++;
+        if(produto.prox != -1)
+        {
+            fseek(produtos, produto.prox, SEEK_SET);
+            continue;
+        }
+        if(produto.product_id == indice.chave)
+            break;
     }
     fclose(produtos);
 
@@ -411,17 +557,60 @@ void remover_produto(unsigned long long product_id)
     int max_remocoes = checar_config(1);
     if (max_remocoes > 0 && num_remocoes >= max_remocoes)
     {
-        reordenar(1);
+        reordenar(0);
+        alterar_config(6, 1);
         num_remocoes = 0;
     }
+    else
+        alterar_config(6, 0);
     alterar_config(4, num_remocoes);
 }
 
-void remover_pedido(unsigned long long order_id)
+void remover_pedido(INDEX indice, unsigned long long order_id)
 {
+    FILE *pedidos = abrir(PATH_DADOS_ORDER, "r+b");
+    if (!pedidos || indice.endereco == -1) return;
+
+    ORDER pedido;
+    long inicio = indice.endereco;
+    int encontrado = 0;
+    fseek(pedidos, inicio, SEEK_SET);
+    while (fread(&pedido, sizeof(ORDER), 1, pedidos)) {
+        if (pedido.order_id == order_id) {
+            pedido.exclusao = 1;
+            encontrado = 1;
+            fseek(pedidos, -sizeof(ORDER), SEEK_CUR);
+            fwrite(&pedido, sizeof(ORDER), 1, pedidos);
+            break;
+        }
+        if(pedido.prox != -1)
+        {
+            fseek(pedidos, pedido.prox, SEEK_SET);
+            continue;
+        }
+        if(pedido.order_id == indice.chave)
+            break;
+    }
+    fclose(pedidos);
+
+    if (!encontrado) 
+        return;
     
+    int num_remocoes = checar_config(5);
+    num_remocoes++;
+    int max_remocoes = checar_config(1);
+    if (max_remocoes > 0 && num_remocoes >= max_remocoes)
+    {
+        reordenar(1);
+        alterar_config(7, 1);
+        num_remocoes = 0;
+    }
+    else
+        alterar_config(7, 0);
+    alterar_config(5, num_remocoes);
 }
 
-//add e remover produto pedido produto-pedido
-//unsigned long long enda, end, endp; // Anterior, atual, final
-//cuidar se for antes do primeiro registro
+void criar_novo_csv()
+{
+
+}

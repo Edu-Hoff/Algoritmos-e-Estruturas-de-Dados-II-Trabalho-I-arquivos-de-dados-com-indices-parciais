@@ -15,14 +15,15 @@ void exibir_menu()
         printf("=====         Exbir          =====\n");
         printf("==================================\n\n");
         //Apenas ideia por enquanto
-        printf("1 - Produtos Cadastrado\n");   //Feito todos_produtos
-        printf("2 - Pedidos Cadastrados\n");   //Feito todos_pedidos
-        printf("3 - Produto (Id - Binaria)\n");//Feito busca_produto - BINARIA
-        printf("4 - Pedido (Id - Binaria)\n"); //Feito busca_pedido - BINARIA
-        printf("5 - Produtos (Categoria Alias)\n"); 
-        printf("6 - Pedidos (Data)\n");
-        printf("7 - Pedidos (Id Usuario)\n");
+        printf("1 - Produtos Cadastrado\n");            //Feito todos_produtos                  - CORRETO
+        printf("2 - Pedidos Cadastrados\n");            //Feito todos_pedidos                   - CORRETO
+        printf("3 - Produto (Id - Binaria)\n");         //Feito busca_produto - BINARIA
+        printf("4 - Pedido (Id - Binaria)\n");          //Feito busca_pedido - BINARIA
+        printf("5 - Produtos (Categoria Alias)\n");     //Feito produtos_por_categoria          - CORRETO
+        printf("6 - Pedidos (Data)\n");                 //Feito pedidos_por_data                - CORRETO
+        printf("7 - Pedidos (Id Usuario)\n");           //Feito pedidos_por_usuario             - CORRETO
         printf("0 - Voltar\n"); 
+        scanf("%d",&op);
         switch (op)
         {
             case 1:
@@ -38,13 +39,13 @@ void exibir_menu()
                 busca_pedido();
                 break;
             case 5:
-                /* code */
+                produtos_por_categoria();
                 break;
             case 6:
-                /* code */
+                pedidos_por_data();
                 break;
             case 7:
-                /* code */
+                pedidos_por_usuario();
                 break;
             default:
                 opcao_invalida();
@@ -62,35 +63,35 @@ void inserir_remover_menu()
         printf("=====    Inserir/Remover     =====\n");
         printf("==================================\n\n");
 
-        printf("1 - Inserir Produto\n");     
-        printf("2 - Remover Produto\n");   
+        printf("1 - Inserir Produto\n");                //Feito - CORRETO
+        printf("2 - Remover Produto\n");                //Feito - CORRETO
         printf("3 - Inserir Pedido\n");     
         printf("4 - Remover pedido\n");  
         printf("5 - Inserir Produto em um Pedido\n");     
         printf("6 - Remover Produto de um Pedido\n");     
         printf("0 - Voltar\n"); 
+        scanf("%d",&op);
         switch (op)
         {
             case 1:
-                /* code */
+                adicionar_produto();
                 break;
             case 2:
-                /* code */
+                remove_produto();
                 break;
             case 3:
-                /* code */
+                adicionar_pedido();
                 break;
             case 4:
-                /* code */
+                remove_pedido();
                 break;
             case 5:
-                /* code */
+                adicionar_produto_pedido();
                 break;
             case 6:
-                /* code */
+                remove_produto_pedido();
                 break;
             case 0:
-                /* code */
                 break;
             default:
                 opcao_invalida();
@@ -108,14 +109,16 @@ void configurar_menu()
         printf("========    Configurar    ========\n");
         printf("==================================\n\n");
 
-        printf("1 - Editar Limite Insercoes\n");     
-        printf("2 - Editar Limite Remocoes\n");   
-        printf("3 - Reordenar Produtos\n");   
-        printf("4 - Reordenar Pedidos\n");   
-        printf("5 - Reordenar Produtos e Pedidos\n");  
-        printf("6 - Recriar Arquivos Bases\n");    
-        printf("7 - Recriar Arquivos Txt\n");    
+        printf("1 - Editar Limite Insercoes\n");        //Feito - CORRETO
+        printf("2 - Editar Limite Remocoes\n");         //Feito - CORRETO
+        printf("3 - Reordenar Produtos\n");             //Feito - CORRETO
+        printf("4 - Reordenar Pedidos\n");              //Feito - CORRETO
+        printf("5 - Reordenar Produtos e Pedidos\n");   //Feito - CORRETO
+        printf("6 - Recriar Arquivos Bases\n");         //Feito - CORRETO
+        printf("7 - Recriar Arquivos Txt\n");           //Feito - CORRETO
+        printf("8 - Criar Novo CSV\n");
         printf("0 - Voltar\n"); 
+        scanf("%d",&op);
         switch (op)
         {
             case 1:
@@ -134,7 +137,7 @@ void configurar_menu()
                 reordenar(2);
                 break;
             case 6:
-                reorganizar_tudo();
+                criar_arquivos_base();
                 break;
             case 7:
                 debug_txt();
@@ -158,24 +161,42 @@ void menu()
 
         printf("1 - Exibir Dados\n");     
         printf("2 - Inserir/Remover Dados\n");   
-        printf("3 - Configurar Reordenacao\n"); 
+        printf("3 - Configurar Reordenacao\n");     //Feito
+        printf("0 - Sair\n");
+        scanf("%d",&op);
+        switch (op)
+        {
+            case 1:
+                exibir_menu();
+                break;
+            case 2:
+                inserir_remover_menu();
+                break;
+            case 3:
+                configurar_menu();
+                break;
+            case 0:
+                break;
+            default:
+                opcao_invalida();
+                break;
+        }
     }while(op!=0);
+}
+
+void checar_arquivos()
+{
+    if(!existe(PATH_DADOS_ORDER,"rb") || !existe(PATH_DADOS_PROD,"rb") || !existe(PATH_INDEX_ORDER,"rb") 
+    || !existe(PATH_INDEX_PROD,"rb")  || !existe(PATH_CONFIG,"rb")     || !existe(PATH_DADOS_ORIGEM,"w"))
+        criar_arquivos_base();
 }
 
 int main ()
 {
-
-    //Salva saida em um txt?
-    //menu e chamada de servicoes
-    //add teste se ja existe os arquivos
-
-    //Opcao para o menu
-        recriar_arquivos_base();
-    //Opcao para o menu (da para mudar o nome)
-        debug_txt();
-        
-    printf("\nFINALIZADO");
-    getchar();
-    getchar();
+    checar_arquivos();
+    menu();
+    printf("\n--------------------------------------------------------------------------------\n");
+    printf("PROGRAMA FINALIZADO");
+    getchar(); getchar();
     return 0;
 }

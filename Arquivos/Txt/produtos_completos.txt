@@ -1,4 +1,8 @@
 PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SIZE) - MAIN_METAL (SIZE) - MAIN_GEM (SIZE) - EXC - PROX - ANT
+5                    - 23                   - fhdg - 0002 - 0035.00 - g - hkggj - fjgh - fh - 0 - -1 - -1
+10                   - 10                   - fdfg - 0002 - 0002.00 - g - dhggfh - dghd - dfg - 0 - -1 - -1
+20                   - 23                   - dgfg - 0002 - 0035.00 - h - dhgd - hdghdfh - hd - 0 - -1 - -1
+50                   - 12                   - hgd - 0002 - 0032.00 - h - hdg - hdhd - hdg - 0 - -1 - -1
 1313550904313512734  - 1806829201915904347  - jewelry.pendant     - 0001 - 0321.78 - f - red       - gold      - emerald   - 0 - -1 - -1
 1313551664447226717  - 1806829201865572696  - jewelry.bracelet    - 0001 - 0572.47 - f - red       - gold      - none      - 0 - -1 - -1
 1313552505925272466  - 1806829201882349913  - jewelry.ring        - 0001 - 0113.56 - f - red       - gold      - none      - 0 - -1 - -1
@@ -9611,4 +9615,10 @@ PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SI
 2537782512956997930  - 1806829201941070173  - jewelry.brooch      - 0000 - 0496.58 - f - red       - gold      - pearl     - 0 - -1 - -1
 2539957035806490883  - 1806829201924292956  - jewelry.necklace    - 0000 - 0982.19 - f - red       - gold      - diamond   - 0 - -1 - -1
 2540059984184476519  - 1806829201882349913  - jewelry.ring        - 0000 - 0350.00 - f - red       - gold      - diamond   - 0 - -1 - -1
+2541962442884252320  - 2541962442884252323  - fdhd - 0002 - 0022.00 - f - jfgjg - fjgjgd - gfj - 0 - -1 - -1
 2541962442884252323  - 1806829201890738522  - jewelry.earring     - 0001 - 0568.36 - f - white     - gold      - diamond   - 0 - -1 - -1
+2541962442884252325  - 23                   - gfj - 0002 - 0035.00 - j - hgjf - jfhjf - fj - 0 - -1 - -1
+2541962442884252330  - 32                   - gfj - 0002 - 0035.00 - j - fgj - fjg - jdd - 0 - -1 - -1
+2541962442884252350  - 32                   - dfh - 0003 - 0031.00 - h - hgdfg - dhdgfh - ddh - 0 - -1 - -1
+2541962442884252370  - 23                   - hfd - 0002 - 0035.00 - h - hgfdsd - hfsdhsd - sh - 0 - -1 - -1
+2541962442884252380  - 3                    - fgh - 0002 - 0035.00 - h - dgh - dfhdf - hd - 0 - -1 - -1

@@ -3,13 +3,13 @@
 #include <string.h>
 #include "utils.c"
 
-PRODUCT indice_produto_binaria(unsigned long long id)
+INDEX indice_produto_binaria(unsigned long long id)
 {
     FILE *produtos = abrir(PATH_INDEX_PROD,"rb");
-    PRODUCT produto_vazio = {0};
+    INDEX index_nulo = {0 , -1};
 
     if(!produtos)
-        return produto_vazio;
+        return index_nulo;
 
     INDEX ind;
     unsigned int tamanho = sizeof(INDEX);
@@ -20,7 +20,7 @@ PRODUCT indice_produto_binaria(unsigned long long id)
     if (end_fim == 0) 
     {
         fclose(produtos);
-        return produto_vazio;
+        return index_nulo;
     }
 
     long num_registros = end_fim / tamanho;
@@ -29,7 +29,9 @@ PRODUCT indice_produto_binaria(unsigned long long id)
     long indice_fim = num_registros - 1;
     long indice_meio;
     long end_meio;
-    INDEX melhor_ind = {0}; 
+    INDEX melhor_ind; 
+    fseek(produtos, -sizeof(INDEX), SEEK_END);
+    fread(&melhor_ind, sizeof(INDEX), 1, produtos);
 
     while (indice_inicio <= indice_fim)
     {
@@ -39,7 +41,7 @@ PRODUCT indice_produto_binaria(unsigned long long id)
         if (fseek(produtos, end_meio, SEEK_SET) != 0 || fread(&ind, tamanho, 1, produtos) != 1) 
         {
             fclose(produtos);
-            return produto_vazio;
+            return index_nulo;
         }
 
         if (ind.chave >= id)
@@ -53,21 +55,16 @@ PRODUCT indice_produto_binaria(unsigned long long id)
     
     fclose(produtos);
 
-    if(melhor_ind.chave == 0)
-        return produto_vazio;
-
-    return busca_produto_binaria(melhor_ind.endereco, id);
+    return melhor_ind;
 }
 
-ORDER indice_pedido_binaria(unsigned long long id)
+INDEX indice_pedido_binaria(unsigned long long id)
 {
     FILE *pedidos = abrir(PATH_INDEX_ORDER,"rb");
-    ORDER pedido_vazio = {0};
+    INDEX index_nulo = {0 , -1};
 
     if(!pedidos)
-    {
-        return pedido_vazio;
-    }
+        return index_nulo;
 
     INDEX ind;
     unsigned int tamanho = sizeof(INDEX);
@@ -77,7 +74,7 @@ ORDER indice_pedido_binaria(unsigned long long id)
 
     if (end_fim == 0) {
         fclose(pedidos);
-        return pedido_vazio;
+        return index_nulo;
     }
 
     long num_registros = end_fim / tamanho;
@@ -96,7 +93,7 @@ ORDER indice_pedido_binaria(unsigned long long id)
         if (fseek(pedidos, end_meio, SEEK_SET) != 0 || fread(&ind, tamanho, 1, pedidos) != 1) 
         {
             fclose(pedidos);
-            return pedido_vazio;
+            return index_nulo;
         }
 
         if (ind.chave >= id)
@@ -111,19 +108,20 @@ ORDER indice_pedido_binaria(unsigned long long id)
     fclose(pedidos);
 
     if(melhor_ind.chave == 0)
-        return pedido_vazio;
+        return index_nulo;
     
-    return busca_pedido_binaria(melhor_ind.endereco, id);
+    return melhor_ind;
 }
-
-//Tornar sequencial e binaria so no indice
 
 PRODUCT busca_produto_binaria(long end_inicio, unsigned long long id)
 {
     FILE *produtos = abrir(PATH_DADOS_PROD,"rb");
     PRODUCT produto_vazio = {0}; 
-    if(!produtos)
+    if(!produtos || end_inicio == -1)
+    {
+        fclose(produtos);
         return produto_vazio;
+    }
 
     PRODUCT produto;
     unsigned int tamanho = sizeof(PRODUCT);
@@ -171,6 +169,8 @@ PRODUCT busca_produto_binaria(long end_inicio, unsigned long long id)
         if (produto.product_id == id)
         {
             fclose(produtos);
+            if(produto.exclusao)
+                return produto_vazio;
             return produto;
         }
         else if (id < produto.product_id)
@@ -187,8 +187,9 @@ ORDER busca_pedido_binaria(long end_inicio, unsigned long long id)
 {
     FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
     ORDER pedido_vazio = {0};
-    if(!pedidos)
+    if(!pedidos || end_inicio == -1)
     {
+        fclose(pedidos);
         return pedido_vazio;
     }
 
@@ -232,6 +233,8 @@ ORDER busca_pedido_binaria(long end_inicio, unsigned long long id)
         if (pedido.order_id == id)
         {
             fclose(pedidos);
+            if(pedido.exclusao)
+                return pedido_vazio;
             return pedido;
         }
         else if (id < pedido.order_id)

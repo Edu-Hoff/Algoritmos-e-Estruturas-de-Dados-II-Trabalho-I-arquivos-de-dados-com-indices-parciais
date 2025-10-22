@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "structs.c"
 
-void limpar_tela(char *msg)
+void limpar_tela(const char *msg)
 {
     #ifdef _WIN32
         system("cls");
@@ -14,7 +15,15 @@ void limpar_tela(char *msg)
         printf("%s",msg);
 }
 
-int existe(ORDER *pedidos, unsigned long long id_pedido, int tam)
+int existe_arquivo(const char *nome, const char *modo)
+{
+    FILE *f = abrir(nome,modo);
+    if(!f) return 0;
+    fclose(f);
+    return 1;
+}
+
+int existe_pedido(ORDER *pedidos, unsigned long long id_pedido, int tam)
 {
     for(int i=0;i<tam;i++)
         if(pedidos[i].order_id == id_pedido)
@@ -28,6 +37,16 @@ int existe_produto(PRODUCT *produtos, unsigned long long id_produto, int tam)
         if(produtos[i].product_id == id_produto)
             return 1;
     return 0;
+}
+
+FILE *abrir(const char *nome, const char *modo)
+{
+    FILE *temp = fopen(nome,modo);
+    if (!temp) {
+        fprintf(stderr, "Erro abrindo '%s' com modo '%s': %s\n", nome, modo, strerror(errno));
+        return NULL;
+    }
+    return temp;
 }
 
 void copiar_e_preencher(char *destino, const char *origem, size_t tamanho)
@@ -144,25 +163,18 @@ void desconstruir_linha(char string[], int *sku, ORDER *order, PRODUCT *product)
     copiar_e_preencher(product->main_gem, (token && token[0] != '\0' ? token : "none"), SIZE_MAIN_CMG);
 }
 
-
-FILE *abrir(const char *nome, const char *modo)
-{
-    FILE *temp = fopen(nome,modo);
-    if (!temp) {
-        fprintf(stderr, "Erro abrindo '%s' com modo '%s': %s\n", nome, modo, strerror(errno));
-        return NULL;
-    }
-    return temp;
-}
-
 void debug_txt()
 {
     FILE *produtos_bin = abrir(PATH_DADOS_PROD, "rb");
-    FILE *produtos_txt = fopen(DIR_TXT "produtos_completos.txt", "w"); 
+    FILE *produtos_txt = abrir(DIR_TXT "produtos_completos.txt", "w"); 
     PRODUCT prod;
 
     if (!produtos_bin || !produtos_txt) 
+    {
+        fclose(produtos_bin);
+        fclose(produtos_txt);
         return;
+    }
     
     fprintf(produtos_txt, "PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SIZE) - MAIN_METAL (SIZE) - MAIN_GEM (SIZE) - EXC - PROX - ANT\n");
     while (fread(&prod, sizeof(PRODUCT), 1, produtos_bin))
@@ -179,8 +191,8 @@ void debug_txt()
             prod.main_metal,     
             prod.main_gem,       
             (int)prod.exclusao,  
-            prod.prox,
-            prod.ant
+            prod.prox == -1? -1 : (prod.prox / sizeof(PRODUCT) + 2),
+            prod.ant == -1? -1 : (prod.ant / sizeof(PRODUCT) + 2)
         );
     }
     
@@ -188,11 +200,15 @@ void debug_txt()
     fclose(produtos_txt);
 
     FILE *pedidos_bin = abrir(PATH_DADOS_ORDER, "rb");
-    FILE *pedidos_txt = fopen(DIR_TXT "pedidos_completos.txt", "w"); 
+    FILE *pedidos_txt = abrir(DIR_TXT "pedidos_completos.txt", "w"); 
     ORDER ord;
 
     if (!pedidos_bin || !pedidos_txt) 
+    {
+        fclose(pedidos_bin);
+        fclose(pedidos_txt);
         return;
+    }
 
     fprintf(pedidos_txt, "ORDER_ID - DATA_UTC - USER_ID - QTD_PRODS - PRODUCTS_ID (SKU) - EXC - PROX - ANT\n");
     
@@ -218,8 +234,8 @@ void debug_txt()
         fprintf(pedidos_txt, 
             " - %1d - %ld - %ld\n",
             (int)ord.exclusao,
-            ord.prox,
-            ord.ant
+            ord.prox == -1? -1 : (ord.prox / sizeof(ORDER) + 2),
+            ord.ant == -1? -1 : (ord.ant / sizeof(ORDER) + 2)
         );
     }
 
@@ -227,7 +243,7 @@ void debug_txt()
     fclose(pedidos_txt);
 
     FILE *ind_prod_bin = abrir(PATH_INDEX_PROD, "rb");
-    FILE *ind_prod_txt = fopen(DIR_TXT"indice_prod.txt", "w");
+    FILE *ind_prod_txt = abrir(DIR_TXT"indice_prod.txt", "w");
     INDEX ind_prod;
 
     if(ind_prod_bin && ind_prod_txt) {
@@ -239,9 +255,14 @@ void debug_txt()
         fclose(ind_prod_bin);
         fclose(ind_prod_txt);
     }
+    else
+    {
+        fclose(ind_prod_bin);
+        fclose(ind_prod_txt);
+    }
 
     FILE *ind_order_bin = abrir(PATH_INDEX_ORDER, "rb");
-    FILE *ind_order_txt = fopen(DIR_TXT"indice_order.txt", "w");
+    FILE *ind_order_txt = abrir(DIR_TXT"indice_order.txt", "w");
     INDEX ind_order;
 
     if(ind_order_bin && ind_order_txt) {
@@ -253,4 +274,47 @@ void debug_txt()
         fclose(ind_order_bin);
         fclose(ind_order_txt);
     }
+    else{
+        fclose(ind_order_bin);
+        fclose(ind_order_txt);
+    }
+
+    FILE *conf_bin = abrir(PATH_CONFIG, "rb");
+    FILE *conf_txt = abrir(DIR_TXT "config_completo.txt", "w");
+    if (!conf_bin || !conf_txt) 
+    {
+        fclose(conf_bin);
+        fclose(conf_txt);
+        return;
+    }
+
+    int v[8];
+    fread(v, sizeof(int), 8, conf_bin);
+
+    fprintf(conf_txt, "CONFIGURAÇÃO DO SISTEMA\n\n");
+    fprintf(conf_txt, "0 - MAX_INS_PROD: %d (Número máximo de inserções antes de reordenar)\n", v[0]);
+    fprintf(conf_txt, "1 - MAX_REM_PROD: %d (Número máximo de remoções antes de reordenar)\n\n", v[1]);
+
+    fprintf(conf_txt, "2 - CONT_INS_PROD: %d (Contagem atual de inserções de produtos)\n", v[2]);
+    fprintf(conf_txt, "4 - CONT_REM_PROD: %d (Contagem atual de remoções de produtos)\n", v[4]);
+    fprintf(conf_txt, "6 - FLAG_ORDEM_PROD: %d (Flag indicando se produtos estão ordenados)\n\n", v[6]);
+
+    fprintf(conf_txt, "3 - CONT_INS_PED: %d (Contagem atual de inserções de pedidos)\n", v[3]);
+    fprintf(conf_txt, "5 - CONT_REM_PED: %d (Contagem atual de remoções de pedidos)\n", v[5]);
+    fprintf(conf_txt, "7 - FLAG_ORDEM_PED: %d (Flag indicando se pedidos estão ordenados)\n", v[7]);
+
+    fclose(conf_bin);
+    fclose(conf_txt);
+}
+
+int comparar_strings(const char *s1, const char *s2) {
+    while (*s1 && *s2) {
+        char c1 = tolower((unsigned char)*s1);
+        char c2 = tolower((unsigned char)*s2);
+        if (c1 != c2)
+            return (unsigned char)c1 - (unsigned char)c2;
+        s1++;
+        s2++;
+    }
+    return (unsigned char)tolower(*s1) - (unsigned char)tolower(*s2);
 }
