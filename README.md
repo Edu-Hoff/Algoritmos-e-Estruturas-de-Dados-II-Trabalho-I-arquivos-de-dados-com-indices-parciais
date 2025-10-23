@@ -25,16 +25,3 @@ Os arquivos de índice — de produto e de pedido — podem ser recriados de for
                                             Main color
                                             	Main metal
                                                     Main gem
-    Data e hora do pedido  
-        ID do pedido  
-            ID do produto comprado  
-                Quantidade do SKU no pedido  
-                    ID da categoria  
-                        Apelido da categoria  
-                            ID da marca  
-                                Preço em USD  
-                                    ID do usuário  
-                                        Gênero do produto (m/f)  
-                                            Cor principal  
-                                                Metal principal  
-                                                    Gema principal
