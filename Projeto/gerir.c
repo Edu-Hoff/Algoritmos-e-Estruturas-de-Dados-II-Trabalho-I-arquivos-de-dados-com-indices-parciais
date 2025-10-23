@@ -623,7 +623,7 @@ void criar_novo_csv()
     FILE *pedidos = abrir(PATH_DADOS_ORDER,"rb");
     if(!produtos || !pedidos) return;
     limpar_tela("");  
-    while(fread(&prod, sizeof(produtos), 1, produtos))
+    while(fread(&prod, sizeof(PRODUCT), 1, produtos))
     {
         if(n_prod % 500 == 0)
             printf("\rProdutos: %d",n_prod);
@@ -641,14 +641,14 @@ void criar_novo_csv()
     fclose(produtos);
     fclose(pedidos);
 
-    FILE *csv = fopen(PATH_DADOS_NOVO, "wb");
+    FILE *csv = fopen(PATH_DADOS_NOVO, "w");
     char linha_final[501];
     for(int i=0; i<n_ped; i++)
     {
         for(int j=0; j<pedidos_mem[i].products_amount; j++)
         {
             PRODUCT produto = produtos_mem[busca_binaria_vet(produtos_mem, n_prod, pedidos_mem[i].products_id[j])];
-            snprintf(linha_final, sizeof(linha_final), "%d-%d-%d %d:%d:%d UTC,%llu,%llu,%d,%llu,%s,%d,%f,%llu,%c,%s,%s,%s\n",
+            snprintf(linha_final, sizeof(linha_final), "%04d-%02d-%02d %02d:%02d:%02d UTC,%020llu,%llu,%d,%llu,%s,%d,%.04f,%llu,%c,%s,%s,%s\n",
                 pedidos_mem[i].date_time.year,
                 pedidos_mem[i].date_time.month,
                 pedidos_mem[i].date_time.day,
@@ -668,7 +668,7 @@ void criar_novo_csv()
                 produto.main_metal,
                 produto.main_gem
             );
-            fwrite(linha_final, sizeof(linha_final), 1, csv);
+            fprintf(csv, linha_final);
         }
     }
     fclose(csv);

@@ -12,7 +12,7 @@ void exibir_menu()
     do
     {
         printf("==================================\n");
-        printf("=====         Exbir          =====\n");
+        printf("=====         Exibir          ====\n");
         printf("==================================\n\n");
         printf("1 - Produtos Cadastrado\n");            //Feito todos_produtos                  - CORRETO
         printf("2 - Pedidos Cadastrados\n");            //Feito todos_pedidos                   - CORRETO

@@ -1,5 +1,5 @@
 PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SIZE) - MAIN_METAL (SIZE) - MAIN_GEM (SIZE) - EXC - PROX - ANT
-1313550904313512734  - 1806829201915904347  - jewelry.pendant     - 0001 - 0321.78 - f - red       - gold      - emerald   - 0 - -1 - -1
+1313550904313512734  - 1806829201915904347  - jewelry.pendant     - 0001 - 0321.78 - f - red       - gold      - emerald   - 0 - -1 - 9616
 1313551664447226717  - 1806829201865572696  - jewelry.bracelet    - 0001 - 0572.47 - f - red       - gold      - none      - 0 - -1 - -1
 1313552505925272466  - 1806829201882349913  - jewelry.ring        - 0001 - 0113.56 - f - red       - gold      - none      - 0 - -1 - -1
 1313552709323850660  - 1806829201890738522  - jewelry.earring     - 0001 - 0547.81 - f - red       - gold      - diamond   - 0 - -1 - -1
@@ -9613,3 +9613,4 @@ PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SI
 2540059984184476519  - 1806829201882349913  - jewelry.ring        - 0000 - 0350.00 - f - red       - gold      - diamond   - 0 - -1 - -1
 2541962442884252323  - 1806829201890738522  - jewelry.earring     - 0001 - 0568.36 - f - white     - gold      - diamond   - 0 - -1 - -1
 2541962442884252324  - 2541962442884252323  - dsgsgd - 0001 - 0435.00 - m - red - iron - diamond - 0 - -1 - -1
+15                   - 21                   - hn - 0005 - 0002.00 - h - hf - fgj - fj - 0 - 2 - -1

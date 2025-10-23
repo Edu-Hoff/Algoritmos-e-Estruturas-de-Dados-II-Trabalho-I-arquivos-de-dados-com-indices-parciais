@@ -3,9 +3,9 @@ CONFIGURAÇÃO DO SISTEMA
 0 - MAX_INS_PROD: 10 (Número máximo de inserções antes de reordenar)
 1 - MAX_REM_PROD: 10 (Número máximo de remoções antes de reordenar)
 
-2 - CONT_INS_PROD: 0 (Contagem atual de inserções de produtos)
+2 - CONT_INS_PROD: 1 (Contagem atual de inserções de produtos)
 4 - CONT_REM_PROD: 0 (Contagem atual de remoções de produtos)
-6 - FLAG_ORDEM_PROD: 1 (Flag indicando se produtos estão ordenados)
+6 - FLAG_ORDEM_PROD: 0 (Flag indicando se produtos estão ordenados)
 
 3 - CONT_INS_PED: 0 (Contagem atual de inserções de pedidos)
 5 - CONT_REM_PED: 0 (Contagem atual de remoções de pedidos)

@@ -7,7 +7,7 @@ void busca_pedido()
     unsigned long long id;
     if(!checar_config(7))
     {
-        printf("O arquivo de pedidos nao esta ordenado, e necessario \nfazer uma reordenacao para realizar a busca binaria");
+        printf("O arquivo de pedidos nao esta ordenado, e necessario \nfazer uma reordenacao para realizar a busca binaria\n");
         return;
     }
     printf("Digite o ID do pedido: ");
@@ -37,7 +37,7 @@ void busca_produto()
     unsigned long long id;
     if(!checar_config(6))
     {
-        printf("O arquivo de produtos nao esta ordenado, e necessario \nfazer uma reordenacao para realizar a busca binaria");
+        printf("O arquivo de produtos nao esta ordenado, e necessario \nfazer uma reordenacao para realizar a busca binaria\n");
         return;
     }
     printf("Digite o ID do produto: ");
@@ -165,22 +165,22 @@ void adicionar_produto()
     PRODUCT produto;
     printf("Digite o ID do produto: ");
     scanf("%llu",&produto.product_id);
-    printf("Digite o category id do produto: ");
+    printf("Digite o id da categoria do produto: ");
     scanf("%llu",&produto.category_id);
-    printf("Digite o category alias do produto: ");
+    printf("Digite o apelido da categoria do produto: ");
     scanf("%s",produto.category_alias);
-    printf("Digite o brand id do produto: ");
+    printf("Digite o id da marca do produto: ");
     scanf("%d",&produto.brand_id);
     printf("Digite o preco do produto: ");
     scanf("%f",&produto.price);
     getchar();
-    printf("Digite o product gender do produto: ");
+    printf("Digite o genero do produto: ");
     scanf("%c",&produto.product_gender);
-    printf("Digite a main color do produto: ");
+    printf("Digite a cor principal do produto: ");
     scanf("%s",produto.main_color);
-    printf("Digite o main metal do produto: ");
+    printf("Digite o metal principal do produto: ");
     scanf("%s",produto.main_metal);
-    printf("Digite a main gem do produto: ");
+    printf("Digite a gema principal do produto: ");
     scanf("%s",produto.main_gem);
     inserir_produto(indice_produto_binaria(produto.product_id), produto);
 }
