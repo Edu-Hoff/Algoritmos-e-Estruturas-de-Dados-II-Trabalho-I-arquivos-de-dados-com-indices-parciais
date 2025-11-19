@@ -20,6 +20,8 @@
 /**/#define ARQ_INDEX_PROD   "products_index.bin"   // Nome do arquivo de índice dos produtos
 /**/#define ARQ_INDEX_ORDER  "orders_index.bin"     // Nome do arquivo de índice dos pedidos
 /**/
+/**/#define CHAVE_CRIPTOGRAFIA "chave_123"          // Chave para criptografar e descriptografar
+/**/
 /**//* ---- Caminhos completos ---- */
 /**/#define PATH_DADOS_ORIGEM  DIR_DADOS ARQ_DADOS_ORIGEM
 /**/#define PATH_DADOS_NOVO  DIR_DADOS ARQ_DADOS_NOVO

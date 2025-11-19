@@ -15,6 +15,54 @@ void limpar_tela(const char *msg)
         printf("%s",msg);
 }
 
+void criptografar(FILE *f){
+    char char_chave;
+    char char_texto;
+    int posChave;
+    int tamanho = sizeof(char);
+    int tamanho_chave = strlen(CHAVE_CRIPTOGRAFIA);
+    char deslocado;
+    while(fread(&char_texto, tamanho, 1, f))
+    {
+        char_chave = CHAVE_CRIPTOGRAFIA[posChave % tamanho_chave];
+
+        deslocado = (char_texto + char_chave) % 256;
+        
+        char_texto = char_chave ^ char_chave;
+
+        fseek(f, -tamanho, SEEK_CUR);
+        fwrite(&char_texto, tamanho, 1, f);
+
+        posChave++;
+    }
+}
+
+FILE * descriptografar(const char * arquivo){
+    FILE *base = abrir(arquivo,"rb");
+    FILE *f = tmpfile();
+    char char_chave;
+    char char_texto;
+    int posChave;
+    int tamanho = sizeof(char);
+    int tamanho_chave = strlen(CHAVE_CRIPTOGRAFIA);
+    char deslocado;
+    while(fread(&char_texto, tamanho, 1, arquivo))
+    {
+        printf("%c",char_texto);
+        char_chave = CHAVE_CRIPTOGRAFIA[posChave % tamanho_chave];
+
+        char_texto = char_chave ^ char_chave;
+
+        int M = 256;
+        char_texto = ((char_texto - char_chave) % M + M) % M;
+
+        fwrite(&char_texto, tamanho, 1, f);
+
+        posChave++;
+    }
+    return f;
+}
+
 int busca_binaria_vet(PRODUCT vetor[], int tamanho, unsigned long long chave) {
     int inicio = 0;
     int fim = tamanho - 1;
