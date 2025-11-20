@@ -167,6 +167,7 @@ void menu()
         printf("1 - Exibir Dados\n");               //Feito
         printf("2 - Inserir/Remover Dados\n");      //Feito
         printf("3 - Configurar Reordenacao\n");     //Feito
+        printf("4 - Criptografia\n");               
         printf("0 - Sair\n");
         scanf("%d",&op);
         limpar_tela("");
@@ -180,6 +181,18 @@ void menu()
                 break;
             case 3:
                 configurar_menu();
+                break;
+            case 4:
+                {
+                    criar_arquivos_base();
+                    FILE *f = abrir(PATH_DADOS_PROD,"r+b");
+                    bin2txt(f,"org.txt");
+                    rewind(f);
+                    criptografar(f);
+                    fclose(f);
+                    bin2txt(descriptografar(PATH_DADOS_PROD),"des.txt");
+
+                } 
                 break;
             case 0:
                 break;
@@ -199,11 +212,13 @@ void checar_arquivos()
 
 int main ()
 {
+
     checar_arquivos();
     menu();
     limpar_tela("Obrigado por usar o sistema");
     printf("\n----------------------------------------\n");
     printf("PROGRAMA FINALIZADO");
+
     getchar(); getchar();
     return 0;
 }

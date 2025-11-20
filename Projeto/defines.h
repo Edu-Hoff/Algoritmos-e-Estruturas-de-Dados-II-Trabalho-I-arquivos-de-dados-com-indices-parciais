@@ -8,6 +8,8 @@
 /**/#define DIR_DADOS "../Arquivos/Dados/"          // Diretório dos arquivos de dados
 /**/#define DIR_INDEX "../Arquivos/Indices/"        // Diretório dos arquivos de índices
 /**/#define DIR_TXT "../Arquivos/Txt/"              // Diretório dos arquivos txt
+/**/#define DIR_TXT_CRIPTOGRAFIA DIR_TXT "Criptografados/"              // Diretório dos arquivos txt
+/**/#define DIR_TXT_DESCRIPTOGRAFIA DIR_TXT "Descriptografados/"              // Diretório dos arquivos txt
 /**/
 /**/#define ARQ_CONFIG "config.bin"                 // Nome do arquivo de configuracoes
 /**/

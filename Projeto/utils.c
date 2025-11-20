@@ -15,23 +15,45 @@ void limpar_tela(const char *msg)
         printf("%s",msg);
 }
 
+FILE *abrir(const char *nome, const char *modo)
+{
+    FILE *temp = fopen(nome,modo);
+    if (!temp) {
+        fprintf(stderr, "Erro abrindo '%s' com modo '%s': %s\n", nome, modo, strerror(errno));
+        return NULL;
+    }
+    return temp;
+}
+void bin2txt(FILE *f, const char *nome)
+{
+    FILE *f_txt = abrir(nome,"w");
+    int i=0;
+    while(fread(&i, sizeof(int), 1, f))
+    {
+        fprintf(f_txt,"%x\n",i);
+    }
+    fclose(f_txt);
+}
 void criptografar(FILE *f){
-    char char_chave;
-    char char_texto;
-    int posChave;
-    int tamanho = sizeof(char);
+    unsigned char char_chave;
+    unsigned char char_texto;
+    int posChave = 0;
+    int tamanho = sizeof(unsigned char);
     int tamanho_chave = strlen(CHAVE_CRIPTOGRAFIA);
-    char deslocado;
+    unsigned char deslocado;
     while(fread(&char_texto, tamanho, 1, f))
     {
+        if (posChave % 10000 == 0)
+            printf("\rPos: %d",posChave);
         char_chave = CHAVE_CRIPTOGRAFIA[posChave % tamanho_chave];
 
         deslocado = (char_texto + char_chave) % 256;
         
-        char_texto = char_chave ^ char_chave;
+        char_texto = deslocado ^ char_chave;
 
         fseek(f, -tamanho, SEEK_CUR);
         fwrite(&char_texto, tamanho, 1, f);
+        fseek(f, 0, SEEK_CUR);
 
         posChave++;
     }
@@ -40,18 +62,19 @@ void criptografar(FILE *f){
 FILE * descriptografar(const char * arquivo){
     FILE *base = abrir(arquivo,"rb");
     FILE *f = tmpfile();
-    char char_chave;
-    char char_texto;
-    int posChave;
-    int tamanho = sizeof(char);
+    unsigned char char_chave;
+    unsigned char char_texto;
+    int posChave = 0;
+    int tamanho = sizeof(unsigned char);
     int tamanho_chave = strlen(CHAVE_CRIPTOGRAFIA);
-    char deslocado;
-    while(fread(&char_texto, tamanho, 1, arquivo))
+    unsigned char deslocado;
+    while(fread(&char_texto, tamanho, 1, base))
     {
-        printf("%c",char_texto);
+        if (posChave % 10000 == 0)
+            printf("\rPos: %d",posChave);
         char_chave = CHAVE_CRIPTOGRAFIA[posChave % tamanho_chave];
 
-        char_texto = char_chave ^ char_chave;
+        char_texto = char_texto ^ char_chave;
 
         int M = 256;
         char_texto = ((char_texto - char_chave) % M + M) % M;
@@ -60,7 +83,23 @@ FILE * descriptografar(const char * arquivo){
 
         posChave++;
     }
+    fclose(base);
+    rewind(f);
     return f;
+}
+
+void atualizar_arquivo(FILE *novo, const char *nome)
+{
+    FILE *arquivo = abrir(nome,"rb+");
+    if(!arquivo) return;
+    fseek(novo, 0, SEEK_END);
+    long tam = ftell(novo);
+    fseek(novo, 0, SEEK_SET);
+    char * buffer = (char*) malloc(tam);
+    fread(buffer, 1, tam, novo);
+    fwrite(buffer, 1, tam, arquivo);
+    free(buffer);
+    fclose(novo);
 }
 
 int busca_binaria_vet(PRODUCT vetor[], int tamanho, unsigned long long chave) {
@@ -105,16 +144,6 @@ int existe_produto(PRODUCT *produtos, unsigned long long id_produto, int tam)
         if(produtos[i].product_id == id_produto)
             return 1;
     return 0;
-}
-
-FILE *abrir(const char *nome, const char *modo)
-{
-    FILE *temp = fopen(nome,modo);
-    if (!temp) {
-        fprintf(stderr, "Erro abrindo '%s' com modo '%s': %s\n", nome, modo, strerror(errno));
-        return NULL;
-    }
-    return temp;
 }
 
 void copiar_e_preencher(char *destino, const char *origem, size_t tamanho)
@@ -267,6 +296,63 @@ void debug_txt()
     fclose(produtos_bin);
     fclose(produtos_txt);
 
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    produtos_bin = abrir(PATH_DADOS_PROD, "rb");
+    produtos_txt = abrir(DIR_TXT "produtos_completos_chars.txt", "w"); 
+    unsigned char letra;
+
+    if (!produtos_bin || !produtos_txt) 
+    {
+        fclose(produtos_bin);
+        fclose(produtos_txt);
+        return;
+    }
+    
+    while (fread(&letra, sizeof(unsigned char), 1, produtos_bin))
+    {
+        fprintf(produtos_txt, 
+            "%d",
+            letra
+        );
+    }
+    
+    fclose(produtos_bin);
+    fclose(produtos_txt);
+
+    produtos_bin = descriptografar(PATH_DADOS_PROD);
+    produtos_txt = abrir(DIR_TXT "produtos_completos_decripto.txt", "w"); 
+
+    if (!produtos_bin || !produtos_txt) 
+    {
+        fclose(produtos_bin);
+        fclose(produtos_txt);
+        return;
+    }
+    
+    fprintf(produtos_txt, "PROD_ID - CAT_ID - CAT_ALIAS (SIZE) - BRAND_ID - PRICE - GENDER - MAIN_COLOR (SIZE) - MAIN_METAL (SIZE) - MAIN_GEM (SIZE) - EXC - PROX - ANT\n");
+    while (fread(&prod, sizeof(PRODUCT), 1, produtos_bin))
+    {
+        fprintf(produtos_txt, 
+            "%-20llu - %-20llu - %s - %04d - %07.2f - %c - %s - %s - %s - %1d - %ld - %ld\n",
+            prod.product_id,
+            prod.category_id,
+            prod.category_alias, 
+            prod.brand_id,
+            prod.price,
+            prod.product_gender,
+            prod.main_color,     
+            prod.main_metal,     
+            prod.main_gem,       
+            (int)prod.exclusao,  
+            prod.prox == -1? -1 : (prod.prox / sizeof(PRODUCT) + 2),
+            prod.ant == -1? -1 : (prod.ant / sizeof(PRODUCT) + 2)
+        );
+    }
+    
+    fclose(produtos_bin);
+    fclose(produtos_txt);
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     FILE *pedidos_bin = abrir(PATH_DADOS_ORDER, "rb");
     FILE *pedidos_txt = abrir(DIR_TXT "pedidos_completos.txt", "w"); 
     ORDER ord;
