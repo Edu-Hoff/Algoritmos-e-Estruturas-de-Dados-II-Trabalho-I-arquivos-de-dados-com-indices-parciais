@@ -100,6 +100,8 @@ void atualizar_arquivo(FILE *novo, const char *nome)
     fwrite(buffer, 1, tam, arquivo);
     free(buffer);
     fclose(novo);
+    criptografar(arquivo);
+    fclose(arquivo);
 }
 
 int busca_binaria_vet(PRODUCT vetor[], int tamanho, unsigned long long chave) {
